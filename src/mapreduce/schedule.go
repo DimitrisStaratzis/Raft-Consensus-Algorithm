@@ -17,7 +17,9 @@ func (mr *Master) schedule(phase jobPhase) {
 
 	fmt.Printf("Schedule: %v %v tasks (%d I/Os)\n", ntasks, phase, nios)
 
-	fmt.Println(mr.registerChannel)
+	msg := mr.registerChannel
+	fmt.Println(msg)
+	fmt.Println("apo panw")
 	// All ntasks tasks have to be scheduled on workers, and only once all of
 	// them have been completed successfully should the function return.
 	// Remember that workers may fail, and that any given worker may finish
