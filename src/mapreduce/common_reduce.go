@@ -2,9 +2,9 @@ package mapreduce
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"os"
-	"sort"
 )
 
 // doReduce does the job of a reduce worker: it reads the intermediate
@@ -58,24 +58,19 @@ func doReduce(
 
 	}
 
-	/*fmt.Println("FAE POUTSO")
-	fmt.Println(len(DecodedKeyValue))
-
-	//fmt.Print(DecodedKeyValue)
 	mergeFile, err := os.Create(mergeName(jobName, reduceTaskNumber))
 	if err != nil {
 		log.Fatal(err)
 	}
 	enc := json.NewEncoder(mergeFile)
-	//i := 0
 	for key, values := range DecodedKeyValue {
+		fmt.Println(len(values))
+		_ = enc.Encode(KeyValue{key, reduceF(key, values)})
 
-		enc.Encode(KeyValue{key, reduceF(key, values)})
+		_ = mergeFile.Close()
+	}
 
-		mergeFile.Close()
-	}*/
-
-	var sortedkeys []string
+	/*var sortedkeys []string
 	for k, _ := range DecodedKeyValue {
 		sortedkeys = append(sortedkeys, k)
 	}
@@ -86,6 +81,6 @@ func doReduce(
 	for _, key := range sortedkeys {
 		enc.Encode(KeyValue{key, reduceF(key, DecodedKeyValue[key])})
 	}
-	out_fdata.Close()
+	out_fdata.Close()*/
 
 }
