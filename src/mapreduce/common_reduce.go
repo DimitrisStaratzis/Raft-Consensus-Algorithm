@@ -66,13 +66,15 @@ func doReduce(
 	fmt.Println(len(DecodedKeyValue))
 
 	//fmt.Print(DecodedKeyValue)
-	mergeFile, err := os.OpenFile(mergeName(jobName, reduceTaskNumber), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	mergeFile, err := os.Create(mergeName(jobName, reduceTaskNumber))
 	if err != nil {
 		log.Fatal(err)
 	}
 	enc := json.NewEncoder(mergeFile)
+	i := 0
 	for key, values := range DecodedKeyValue {
-		fmt.Println(values)
+		i++
+		fmt.Println(i)
 		//skata
 		enc.Encode(KeyValue{key, reduceF(key, values)})
 
