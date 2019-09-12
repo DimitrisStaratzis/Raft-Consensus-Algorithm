@@ -56,26 +56,17 @@ func doReduce(
 		}
 		indFileData.Close()
 	}
+	mergeFile, err := os.OpenFile(mergeName(jobName, reduceTaskNumber), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		log.Fatal(err)
+	}
+	enc := json.NewEncoder(mergeFile)
 	for key, values := range DecodedKeyValue {
 		fmt.Println(values)
 		//skata
-		//var KeyValues[] string
-		{
-			mergeFile, err := os.OpenFile(mergeName(jobName, reduceTaskNumber), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-			if err != nil {
-				log.Fatal(err)
-			}
-			enc := json.NewEncoder(mergeFile)
-			enc.Encode(KeyValue{key, reduceF(key, values)})
-			mergeFile.Close()
+		enc.Encode(KeyValue{key, reduceF(key, values)})
+		mergeFile.Close()
 
-			//reduceF(key, values)
-			/*for key2, value := range DecodedKeyValue{
-				if key1 == key2{
-					KeyValues = append(KeyValues, value[0])
-				}
-			}*/
-		}
 	}
 
 }
