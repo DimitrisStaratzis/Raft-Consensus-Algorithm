@@ -65,7 +65,7 @@ func doReduce(
 	fmt.Println("FAE POUTSO")
 	fmt.Println(len(DecodedKeyValue))
 
-	fmt.Print(DecodedKeyValue)
+	//fmt.Print(DecodedKeyValue)
 	mergeFile, err := os.OpenFile(mergeName(jobName, reduceTaskNumber), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		log.Fatal(err)
