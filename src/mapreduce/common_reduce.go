@@ -54,12 +54,8 @@ func doReduce(
 			}
 			DecodedKeyValue[kv.Key] = append(DecodedKeyValue[kv.Key], kv.Value)
 		}
-		fi, err := indFileData.Stat()
-		if err != nil {
-			// Could not obtain stat, handle error
-		}
-		fmt.Printf("The file is %d bytes long", fi.Size())
 		indFileData.Close()
+
 	}
 	mergeFile, err := os.OpenFile(mergeName(jobName, reduceTaskNumber), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
@@ -72,7 +68,12 @@ func doReduce(
 		enc.Encode(KeyValue{key, reduceF(key, values)})
 
 		mergeFile.Close()
-
 	}
+
+	fi, err := mergeFile.Stat()
+	if err != nil {
+		// Could not obtain stat, handle error
+	}
+	fmt.Printf("The file is %d bytes long", fi.Size())
 
 }
