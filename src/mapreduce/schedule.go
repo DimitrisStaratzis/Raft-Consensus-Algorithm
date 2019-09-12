@@ -17,7 +17,7 @@ func (mr *Master) schedule(phase jobPhase) {
 
 	fmt.Printf("Schedule: %v %v tasks (%d I/Os)\n", ntasks, phase, nios)
 
-	msg := mr.registerChannel
+	msg := <-mr.registerChannel
 	fmt.Println(msg)
 	fmt.Println("apo panw")
 	// All ntasks tasks have to be scheduled on workers, and only once all of
