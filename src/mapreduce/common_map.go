@@ -68,11 +68,6 @@ func doMap(
 
 		}
 		//TODO CHANGE TO ARRAY OF FILES
-		fi, err := reduceFile.Stat()
-		if err != nil {
-			// Could not obtain stat, handle error
-		}
-		fmt.Printf("The file is %d bytes long", fi.Size())
 
 		reduceFile.Close()
 

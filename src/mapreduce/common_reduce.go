@@ -65,6 +65,11 @@ func doReduce(
 		fmt.Println(values)
 		//skata
 		enc.Encode(KeyValue{key, reduceF(key, values)})
+		fi, err := mergeFile.Stat()
+		if err != nil {
+			// Could not obtain stat, handle error
+		}
+		fmt.Println("The file is %d bytes long", fi.Size())
 		mergeFile.Close()
 
 	}
