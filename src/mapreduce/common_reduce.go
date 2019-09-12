@@ -56,20 +56,14 @@ func doReduce(
 		indFileData.Close()
 
 	}
+	/* runs but takes 400 seconds
+	mergeFile, err := os.Create(mergeName(jobName, reduceTaskNumber))
+	if err != nil {
+		log.Fatal(err)
+	}
+	enc := json.NewEncoder(mergeFile)
 
-	//mergeFile, err := os.Create(mergeName(jobName, reduceTaskNumber))
-	//if err != nil {
-	//	log.Fatal(err)
-	//}
-	//enc := json.NewEncoder(mergeFile)
-	/*for key, values := range DecodedKeyValue {
-		fmt.Println(len(values))
-		_ = enc.Encode(KeyValue{key, reduceF(key, values)})
-
-		_ = mergeFile.Close()
-	}*/
-
-	/*for key1, _ := range DecodedKeyValue {
+	for key1, _ := range DecodedKeyValue {
 		var key1Values []string
 		for key2, value := range DecodedKeyValue {
 			if key1 == key2 {
@@ -91,18 +85,5 @@ func doReduce(
 	for _, key := range differentKeys {
 		_ = enc.Encode(KeyValue{key, reduceF(key, DecodedKeyValue[key])})
 	}
-
-	/*var sortedkeys []string
-	for k, _ := range DecodedKeyValue {
-		sortedkeys = append(sortedkeys, k)
-	}
-	sort.Strings(sortedkeys)
-
-	out_fdata, _ := os.Create(mergeName(jobName, reduceTaskNumber))
-	enc := json.NewEncoder(out_fdata)
-	for _, key := range sortedkeys {
-		enc.Encode(KeyValue{key, reduceF(key, DecodedKeyValue[key])})
-	}
-	out_fdata.Close()*/
 
 }
