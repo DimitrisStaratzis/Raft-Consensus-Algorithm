@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"mapreduce"
 	"os"
 	"strconv"
@@ -34,10 +35,14 @@ func reduceF(key string, values []string) string {
 	// TODO: you also have to write this function
 	result := 0
 	for _, value := range values {
-		valueToInt, _ := strconv.Atoi(value)
+		valueToInt, err := strconv.Atoi(value)
+		if err != nil {
+			log.Fatal(err)
+		}
 		result += valueToInt
 	}
-	return strconv.Itoa(result)
+	toReturn := strconv.Itoa(result)
+	return toReturn
 
 }
 
