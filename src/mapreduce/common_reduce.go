@@ -2,7 +2,6 @@ package mapreduce
 
 import (
 	"encoding/json"
-	"fmt"
 	"log"
 	"os"
 )
@@ -63,11 +62,22 @@ func doReduce(
 		log.Fatal(err)
 	}
 	enc := json.NewEncoder(mergeFile)
-	for key, values := range DecodedKeyValue {
+	/*for key, values := range DecodedKeyValue {
 		fmt.Println(len(values))
 		_ = enc.Encode(KeyValue{key, reduceF(key, values)})
 
 		_ = mergeFile.Close()
+	}*/
+
+	for key1, _ := range DecodedKeyValue {
+		var key1Values []string
+		for key2, value := range DecodedKeyValue {
+			if key1 == key2 {
+				key1Values = append(key1Values, value[0])
+			}
+
+		}
+		enc.Encode(KeyValue{key1, reduceF(key1, key1Values)})
 	}
 
 	/*var sortedkeys []string
