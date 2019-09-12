@@ -41,7 +41,7 @@ func doReduce(
 	DecodedKeyValue := make(map[string][]string)
 	for i := 0; i < nMap; i++ {
 
-		indFileData, err := os.OpenFile(reduceName(jobName, i, reduceTaskNumber), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+		indFileData, err := os.Open(reduceName(jobName, i, reduceTaskNumber))
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -57,6 +57,14 @@ func doReduce(
 		indFileData.Close()
 
 	}
+	/*fi, err := DecodedKe.Stat()
+	if err != nil {
+		// Could not obtain stat, handle error
+	}
+	fmt.Printf("The file is %d bytes long", fi.Size())*/
+	fmt.Println("FAE POUTSO")
+	fmt.Println(len(DecodedKeyValue))
+
 	fmt.Print(DecodedKeyValue)
 	mergeFile, err := os.OpenFile(mergeName(jobName, reduceTaskNumber), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
@@ -70,11 +78,5 @@ func doReduce(
 
 		mergeFile.Close()
 	}
-
-	fi, err := mergeFile.Stat()
-	if err != nil {
-		// Could not obtain stat, handle error
-	}
-	fmt.Printf("The file is %d bytes long", fi.Size())
 
 }
