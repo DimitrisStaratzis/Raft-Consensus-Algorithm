@@ -57,11 +57,11 @@ func doReduce(
 
 	}
 
-	mergeFile, err := os.Create(mergeName(jobName, reduceTaskNumber))
-	if err != nil {
-		log.Fatal(err)
-	}
-	enc := json.NewEncoder(mergeFile)
+	//mergeFile, err := os.Create(mergeName(jobName, reduceTaskNumber))
+	//if err != nil {
+	//	log.Fatal(err)
+	//}
+	//enc := json.NewEncoder(mergeFile)
 	/*for key, values := range DecodedKeyValue {
 		fmt.Println(len(values))
 		_ = enc.Encode(KeyValue{key, reduceF(key, values)})
@@ -69,7 +69,7 @@ func doReduce(
 		_ = mergeFile.Close()
 	}*/
 
-	for key1, _ := range DecodedKeyValue {
+	/*for key1, _ := range DecodedKeyValue {
 		var key1Values []string
 		for key2, value := range DecodedKeyValue {
 			if key1 == key2 {
@@ -78,6 +78,18 @@ func doReduce(
 
 		}
 		enc.Encode(KeyValue{key1, reduceF(key1, key1Values)})
+	}*/
+	var differentKeys []string
+	for k, _ := range DecodedKeyValue {
+		differentKeys = append(differentKeys, k)
+	}
+	OutputFile, err := os.Create(mergeName(jobName, reduceTaskNumber))
+	if err != nil {
+		log.Fatal(err)
+	}
+	enc := json.NewEncoder(OutputFile)
+	for _, key := range differentKeys {
+		_ = enc.Encode(KeyValue{key, reduceF(key, DecodedKeyValue[key])})
 	}
 
 	/*var sortedkeys []string
