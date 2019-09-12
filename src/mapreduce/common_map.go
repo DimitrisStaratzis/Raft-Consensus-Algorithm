@@ -50,6 +50,7 @@ func doMap(
 		log.Fatal(err)
 	}
 	stringFile := string(bytes)
+	fmt.Println("MALAKA")
 	dataAfterMapping := mapF(inFile, stringFile) //deploy the map function
 	for i := 0; i < nReduce; i++ {               //for the number of reduce tasks
 		reduceFile, err := os.OpenFile(reduceName(jobName, mapTaskNumber, i), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644) //create file
