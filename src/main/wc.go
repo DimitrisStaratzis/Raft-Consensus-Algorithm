@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"mapreduce"
 	"os"
+	"strconv"
+	"strings"
 )
 
 // The mapping function is called once for each piece of the input.
@@ -12,6 +14,13 @@ import (
 // key/value pairs, each represented by a mapreduce.KeyValue.
 func mapF(document string, value string) (res []mapreduce.KeyValue) {
 	// TODO: you have to write this function
+	//result := make([]mapreduce.KeyValue, 0)
+	//get words
+	words := strings.Fields(value)
+	for _, value := range words {
+		res = append(res, mapreduce.KeyValue{value, "1"})
+	}
+	return res
 
 }
 
@@ -20,6 +29,13 @@ func mapF(document string, value string) (res []mapreduce.KeyValue) {
 // should be a single output value for that key.
 func reduceF(key string, values []string) string {
 	// TODO: you also have to write this function
+	res := 0
+	for _, v := range values {
+		cnt, _ := strconv.Atoi(v)
+		res += cnt
+	}
+	return strconv.Itoa(res)
+
 }
 
 // Can be run in 3 ways:
