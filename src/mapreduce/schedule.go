@@ -2,6 +2,10 @@ package mapreduce
 
 import "fmt"
 
+func callWorker(workerName string, args DoTaskArgs) bool {
+	return call(workerName, "Worker.DoTask", args, new(struct{}))
+}
+
 // schedule starts and waits for all tasks in the given phase (Map or Reduce).
 func (mr *Master) schedule(phase jobPhase) {
 	var ntasks int
@@ -28,12 +32,12 @@ func (mr *Master) schedule(phase jobPhase) {
 		fmt.Println("waiting for worker to connect...")
 		workerName := <-mr.registerChannel
 		fmt.Printf("Connected to server %s \n", workerName)
-		taskStatus := call(workerName, "Worker.DoTask", args, new(struct{}))
-		if taskStatus == false {
+		go callWorker(workerName, *args)
+		/*if taskStatus == false {
 			fmt.Printf("Worker %s failed\n", workerName)
 		} else {
 
-		}
+		}*/
 	}
 
 	// All ntasks tasks have to be scheduled on workers, and only once all of
