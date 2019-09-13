@@ -5,8 +5,9 @@ import (
 	"sync"
 )
 
-func callWorker(workerName string, args DoTaskArgs, mr *Master, tasksStatus map[string]int, index int) bool {
+func callWorker(workerName string, args DoTaskArgs, mr *Master, tasksStatus map[string]int, index int, wg *sync.WaitGroup) bool {
 	//var err error
+	defer wg.Done()
 	ok := call(workerName, "Worker.DoTask", args, new(struct{}))
 	if ok {
 		tasksStatus[mr.files[index]] = 2
@@ -65,7 +66,7 @@ func (mr *Master) schedule(phase jobPhase) {
 			workerName := <-mr.registerChannel
 			//fmt.Printf("Connected to worker %s \n", workerName)
 			wg.Add(1)
-			go callWorker(workerName, args, mr, tasksStatus, task)
+			go callWorker(workerName, args, mr, tasksStatus, task, &wg)
 			/*counter := 0
 			for j := 0; j < ntasks; j++ {
 				if tasksStatus[mr.files[j]] == 2 {
