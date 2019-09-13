@@ -9,12 +9,12 @@ func callWorker(workerName string, args DoTaskArgs, mr *Master, tasksStatus map[
 	//var err error
 
 	ok := call(workerName, "Worker.DoTask", args, new(struct{}))
-	defer wg.Done()
 	if ok {
 		tasksStatus[mr.files[index]] = 2
 	} else {
 		tasksStatus[mr.files[index]] = 0
 	}
+	wg.Done()
 	mr.registerChannel <- workerName //put worker back as soon as it finishes its task
 	return ok
 }
