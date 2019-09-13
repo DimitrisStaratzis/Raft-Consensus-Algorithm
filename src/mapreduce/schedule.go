@@ -2,6 +2,7 @@ package mapreduce
 
 import (
 	"fmt"
+	"sync"
 )
 
 func callWorker(workerName string, args DoTaskArgs, mr *Master, tasksStatus map[string]int, index int) bool {
@@ -48,6 +49,7 @@ func (mr *Master) schedule(phase jobPhase) {
 	for task := 0; task < ntasks; task++ {
 		tasksStatus[mr.files[task]] = 0
 	}
+	var wg sync.WaitGroup
 	task := 0
 	for {
 		if tasksStatus[mr.files[task]] != 2 {
@@ -62,6 +64,7 @@ func (mr *Master) schedule(phase jobPhase) {
 			//fmt.Println("waiting for worker to connect...")
 			workerName := <-mr.registerChannel
 			//fmt.Printf("Connected to worker %s \n", workerName)
+			wg.Add(1)
 			go callWorker(workerName, args, mr, tasksStatus, task)
 			/*counter := 0
 			for j := 0; j < ntasks; j++ {
@@ -90,6 +93,7 @@ func (mr *Master) schedule(phase jobPhase) {
 		}
 		task++
 	}
+	wg.Wait()
 
 	fmt.Printf("Schedule: %v phase done\n", phase)
 }
