@@ -73,7 +73,7 @@ func (mr *Master) schedule(phase jobPhase) {
 			}*/
 		}
 
-		if task == ntasks {
+		if task == ntasks-1 {
 			counter := 0
 			for j := 0; j < ntasks; j++ {
 				if tasksStatus[mr.files[j]] == 2 {
