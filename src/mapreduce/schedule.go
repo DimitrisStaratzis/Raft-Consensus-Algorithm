@@ -3,7 +3,12 @@ package mapreduce
 import "fmt"
 
 func callWorker(workerName string, args DoTaskArgs) bool {
-	return call(workerName, "Worker.DoTask", args, new(struct{}))
+	var err error
+	status := call(workerName, "Worker.DoTask", args, &err)
+	if err != nil {
+		fmt.Println(err)
+	}
+	return status
 }
 
 // schedule starts and waits for all tasks in the given phase (Map or Reduce).
