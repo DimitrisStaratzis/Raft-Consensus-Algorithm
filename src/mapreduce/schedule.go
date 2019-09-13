@@ -34,6 +34,7 @@ func (mr *Master) schedule(phase jobPhase) {
 
 	fmt.Printf("Schedule: %v %v tasks (%d I/Os)\n", ntasks, phase, nios)
 	wg := sync.WaitGroup{}
+	wg.Add(ntasks)
 	for task := 0; task < ntasks; task++ {
 		args := DoTaskArgs{
 			JobName:       mr.jobName,
