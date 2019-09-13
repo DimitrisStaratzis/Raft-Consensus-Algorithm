@@ -83,7 +83,7 @@ func (mr *Master) schedule(phase jobPhase) {
 			if counter == ntasks {
 				break
 			} else {
-				task = 0
+				task = -1
 			}
 
 		}
