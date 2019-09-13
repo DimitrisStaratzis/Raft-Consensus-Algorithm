@@ -1,6 +1,9 @@
 package mapreduce
 
-import "fmt"
+import (
+	"fmt"
+	"sync"
+)
 
 func callWorker(workerName string, args DoTaskArgs) bool {
 	var err error
@@ -30,7 +33,7 @@ func (mr *Master) schedule(phase jobPhase) {
 	}
 
 	fmt.Printf("Schedule: %v %v tasks (%d I/Os)\n", ntasks, phase, nios)
-
+	wg := sync.WaitGroup{}
 	for task := 0; task < ntasks; task++ {
 		args := DoTaskArgs{
 			JobName:       mr.jobName,
@@ -59,5 +62,6 @@ func (mr *Master) schedule(phase jobPhase) {
 	// TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO
 
 	//
+	wg.Wait()
 	fmt.Printf("Schedule: %v phase done\n", phase)
 }
