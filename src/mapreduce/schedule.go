@@ -13,8 +13,8 @@ func callWorker(workerName string, args DoTaskArgs, mr *Master) bool {
 		fmt.Println("to error apo panw")
 		fmt.Println(args.Phase)
 		fmt.Println("to phase apo panw")*/
-		mr.registerChannel <- workerName
 	}
+	mr.registerChannel <- workerName
 
 	return status
 }
