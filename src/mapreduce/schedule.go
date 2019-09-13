@@ -20,11 +20,13 @@ func (mr *Master) schedule(phase jobPhase) {
 	var nios int // number of inputs (for reduce) or outputs (for map)
 	switch phase {
 	case mapPhase:
+		debug("Map phase")
 		ntasks = len(mr.files)
 		nios = mr.nReduce
 	case reducePhase:
 		ntasks = mr.nReduce
 		nios = len(mr.files)
+		debug("reduce phase")
 	}
 
 	fmt.Printf("Schedule: %v %v tasks (%d I/Os)\n", ntasks, phase, nios)
