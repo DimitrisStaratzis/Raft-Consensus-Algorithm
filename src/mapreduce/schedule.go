@@ -63,6 +63,18 @@ func (mr *Master) schedule(phase jobPhase) {
 			workerName := <-mr.registerChannel
 			fmt.Printf("Connected to worker %s \n", workerName)
 			go callWorker(workerName, args, mr, tasksStatus, task)
+			/*counter := 0
+			for j := 0; j < ntasks; j++ {
+				if tasksStatus[mr.files[j]] == 2 {
+					counter++
+				}
+			}
+			if counter == ntasks {
+				break
+			}*/
+		}
+
+		if task == ntasks-1 {
 			counter := 0
 			for j := 0; j < ntasks; j++ {
 				if tasksStatus[mr.files[j]] == 2 {
@@ -71,11 +83,10 @@ func (mr *Master) schedule(phase jobPhase) {
 			}
 			if counter == ntasks {
 				break
+			} else {
+				task = 0
 			}
-		}
 
-		if task == ntasks-1 {
-			task = 0
 		}
 	}
 
