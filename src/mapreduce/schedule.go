@@ -50,26 +50,32 @@ func (mr *Master) schedule(phase jobPhase) {
 	task := 0
 	for {
 		task++
-		args := DoTaskArgs{
-			JobName:       mr.jobName,
-			File:          mr.files[task],
-			Phase:         phase,
-			TaskNumber:    task,
-			NumOtherPhase: nios,
-		}
+		if tasksStatus[mr.files[task]] != 2 {
+			args := DoTaskArgs{
+				JobName:       mr.jobName,
+				File:          mr.files[task],
+				Phase:         phase,
+				TaskNumber:    task,
+				NumOtherPhase: nios,
+			}
 
-		fmt.Println("waiting for worker to connect...")
-		workerName := <-mr.registerChannel
-		fmt.Printf("Connected to worker %s \n", workerName)
-		go callWorker(workerName, args, mr, tasksStatus, task)
-		counter := 0
-		for j := 0; j < ntasks; j++ {
-			if tasksStatus[mr.files[j]] == 2 {
-				counter++
+			fmt.Println("waiting for worker to connect...")
+			workerName := <-mr.registerChannel
+			fmt.Printf("Connected to worker %s \n", workerName)
+			go callWorker(workerName, args, mr, tasksStatus, task)
+			counter := 0
+			for j := 0; j < ntasks; j++ {
+				if tasksStatus[mr.files[j]] == 2 {
+					counter++
+				}
+			}
+			if counter == ntasks {
+				break
 			}
 		}
-		if counter == ntasks {
-			break
+
+		if task == ntasks-1 {
+			task = 0
 		}
 	}
 
