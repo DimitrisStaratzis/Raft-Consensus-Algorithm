@@ -7,6 +7,9 @@ func callWorker(workerName string, args DoTaskArgs) bool {
 	status := call(workerName, "Worker.DoTask", args, &err)
 	if err != nil {
 		fmt.Println(err)
+		fmt.Println("to error apo panw")
+		fmt.Println(args.Phase)
+		fmt.Println("to phase apo panw")
 	}
 	return status
 }
@@ -37,7 +40,7 @@ func (mr *Master) schedule(phase jobPhase) {
 
 		fmt.Println("waiting for worker to connect...")
 		workerName := <-mr.registerChannel
-		fmt.Printf("Connected to server %s \n", workerName)
+		fmt.Printf("Connected to worker %s \n", workerName)
 		go callWorker(workerName, args)
 		/*if taskStatus == false {
 			fmt.Printf("Worker %s failed\n", workerName)
