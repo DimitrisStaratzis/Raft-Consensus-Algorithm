@@ -7,11 +7,12 @@ import (
 
 func callWorker(workerName string, args DoTaskArgs, mr *Master, tasksStatus map[string]int, index int, wg *sync.WaitGroup) bool {
 	//var err error
-	defer wg.Done()
+
 	ok := call(workerName, "Worker.DoTask", args, new(struct{}))
 	if ok {
 		tasksStatus[mr.files[index]] = 2
 	}
+	wg.Done()
 	mr.registerChannel <- workerName //put worker back as soon as it finishes its task
 	return ok
 }
