@@ -5,17 +5,8 @@ import (
 )
 
 func callWorker(workerName string, args DoTaskArgs, mr *Master) bool {
-	var err error
-	status := call(workerName, "Worker.DoTask", args, &err)
-	if err != nil {
-
-		/*fmt.Println(err)
-		fmt.Println("to error apo panw")
-		fmt.Println(args.Phase)
-		fmt.Println("to phase apo panw")*/
-	}
+	status := call(workerName, "Worker.DoTask", args, nil)
 	mr.registerChannel <- workerName
-
 	return status
 }
 
