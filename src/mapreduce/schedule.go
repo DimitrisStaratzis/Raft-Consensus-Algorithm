@@ -2,18 +2,20 @@ package mapreduce
 
 import (
 	"fmt"
-	"sync"
 )
 
-func callWorker(workerName string, args DoTaskArgs) bool {
+func callWorker(workerName string, args DoTaskArgs, mr *Master) bool {
 	var err error
 	status := call(workerName, "Worker.DoTask", args, &err)
 	if err != nil {
-		fmt.Println(err)
+
+		/*fmt.Println(err)
 		fmt.Println("to error apo panw")
 		fmt.Println(args.Phase)
-		fmt.Println("to phase apo panw")
+		fmt.Println("to phase apo panw")*/
+		mr.registerChannel <- workerName
 	}
+
 	return status
 }
 
@@ -33,8 +35,8 @@ func (mr *Master) schedule(phase jobPhase) {
 	}
 
 	fmt.Printf("Schedule: %v %v tasks (%d I/Os)\n", ntasks, phase, nios)
-	wg := sync.WaitGroup{}
-	wg.Add(ntasks)
+	/*wg := sync.WaitGroup{}
+	wg.Add(ntasks)*/
 	for task := 0; task < ntasks; task++ {
 		args := DoTaskArgs{
 			JobName:       mr.jobName,
@@ -47,7 +49,7 @@ func (mr *Master) schedule(phase jobPhase) {
 		fmt.Println("waiting for worker to connect...")
 		workerName := <-mr.registerChannel
 		fmt.Printf("Connected to worker %s \n", workerName)
-		go callWorker(workerName, args)
+		go callWorker(workerName, args, mr)
 		/*if taskStatus == false {
 			fmt.Printf("Worker %s failed\n", workerName)
 		} else {
@@ -63,6 +65,6 @@ func (mr *Master) schedule(phase jobPhase) {
 	// TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO
 
 	//
-	wg.Wait()
+	//wg.Wait()
 	fmt.Printf("Schedule: %v phase done\n", phase)
 }
