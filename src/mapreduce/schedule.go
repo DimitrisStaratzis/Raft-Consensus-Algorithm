@@ -5,8 +5,9 @@ import (
 )
 
 func callWorker(workerName string, args DoTaskArgs, mr *Master, tasksStatus map[string]int, index int) bool {
-	ok := call(workerName, "Worker.DoTask", args, nil)
-	if ok {
+	var err error
+	ok := call(workerName, "Worker.DoTask", args, err)
+	if ok && err == nil {
 		tasksStatus[mr.files[index]] = 2
 	}
 	mr.registerChannel <- workerName //put worker back as soon as it finishes its task
