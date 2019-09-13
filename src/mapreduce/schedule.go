@@ -25,7 +25,9 @@ func (mr *Master) schedule(phase jobPhase) {
 		args.TaskNumber = task
 		args.NumOtherPhase = nios
 
+		fmt.Println("waiting for worker to connect...")
 		workerName := <-mr.registerChannel
+		fmt.Printf("Connected to server %s \n", workerName)
 		taskStatus := call(workerName, "Worker.DoTask", args, new(struct{}))
 		if taskStatus == false {
 			fmt.Printf("Worker %s failed\n", workerName)
