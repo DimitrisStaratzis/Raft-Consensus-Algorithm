@@ -2,7 +2,6 @@ package mapreduce
 
 import (
 	"encoding/json"
-	"fmt"
 	"hash/fnv"
 	"io/ioutil"
 	"log"
@@ -50,7 +49,6 @@ func doMap(
 		log.Fatal(err)
 	}
 	stringFile := string(bytes)
-	fmt.Println("MALAKA")
 	dataAfterMapping := mapF(inFile, stringFile) //deploy the map function
 	for i := 0; i < nReduce; i++ {               //for the number of reduce tasks
 		reduceFile, err := os.Create(reduceName(jobName, mapTaskNumber, i)) //create file
