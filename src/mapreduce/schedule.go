@@ -49,7 +49,6 @@ func (mr *Master) schedule(phase jobPhase) {
 	}
 	task := 0
 	for {
-		task++
 		if tasksStatus[mr.files[task]] != 2 {
 			args := DoTaskArgs{
 				JobName:       mr.jobName,
@@ -88,6 +87,7 @@ func (mr *Master) schedule(phase jobPhase) {
 			}
 
 		}
+		task++
 	}
 
 	fmt.Printf("Schedule: %v phase done\n", phase)
