@@ -17,9 +17,23 @@ func (mr *Master) schedule(phase jobPhase) {
 
 	fmt.Printf("Schedule: %v %v tasks (%d I/Os)\n", ntasks, phase, nios)
 
-	msg := <-mr.registerChannel
-	fmt.Println(msg)
-	fmt.Println("apo panw")
+	for task := 0; task < ntasks; task++ {
+		args := new(DoTaskArgs)
+		args.JobName = mr.jobName
+		args.File = mr.files[task]
+		args.Phase = phase
+		args.TaskNumber = task
+		args.NumOtherPhase = nios
+
+		workerName := <-mr.registerChannel
+		taskStatus := call(workerName, "Worker.DoTask", args, new(struct{}))
+		if taskStatus == false {
+			fmt.Printf("Worker %s failed\n", workerName)
+		} else {
+
+		}
+	}
+
 	// All ntasks tasks have to be scheduled on workers, and only once all of
 	// them have been completed successfully should the function return.
 	// Remember that workers may fail, and that any given worker may finish
