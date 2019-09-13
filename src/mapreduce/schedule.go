@@ -11,6 +11,8 @@ func callWorker(workerName string, args DoTaskArgs, mr *Master, tasksStatus map[
 	ok := call(workerName, "Worker.DoTask", args, new(struct{}))
 	if ok {
 		tasksStatus[mr.files[index]] = 2
+	} else {
+		tasksStatus[mr.files[index]] = 0
 	}
 	wg.Done()
 	mr.registerChannel <- workerName //put worker back as soon as it finishes its task
@@ -54,7 +56,7 @@ func (mr *Master) schedule(phase jobPhase) {
 	var wg sync.WaitGroup
 	task := 0
 	for {
-		if tasksStatus[mr.files[task]] != 2 {
+		if tasksStatus[mr.files[task]] == 0 {
 			args := DoTaskArgs{
 				JobName:       mr.jobName,
 				File:          mr.files[task],
@@ -67,6 +69,7 @@ func (mr *Master) schedule(phase jobPhase) {
 			workerName := <-mr.registerChannel
 			//fmt.Printf("Connected to worker %s \n", workerName)
 			wg.Add(1)
+			tasksStatus[mr.files[task]] = 1 //working on this file
 			go callWorker(workerName, args, mr, tasksStatus, task, &wg)
 			/*counter := 0
 			for j := 0; j < ntasks; j++ {
