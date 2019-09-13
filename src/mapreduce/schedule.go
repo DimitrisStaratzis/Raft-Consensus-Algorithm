@@ -27,17 +27,18 @@ func (mr *Master) schedule(phase jobPhase) {
 	fmt.Printf("Schedule: %v %v tasks (%d I/Os)\n", ntasks, phase, nios)
 
 	for task := 0; task < ntasks; task++ {
-		args := new(DoTaskArgs)
-		args.JobName = mr.jobName
-		args.File = mr.files[task]
-		args.Phase = phase
-		args.TaskNumber = task
-		args.NumOtherPhase = nios
+		args := DoTaskArgs{
+			JobName:       mr.jobName,
+			File:          mr.files[task],
+			Phase:         phase,
+			TaskNumber:    task,
+			NumOtherPhase: nios,
+		}
 
 		fmt.Println("waiting for worker to connect...")
 		workerName := <-mr.registerChannel
 		fmt.Printf("Connected to server %s \n", workerName)
-		go callWorker(workerName, *args)
+		go callWorker(workerName, args)
 		/*if taskStatus == false {
 			fmt.Printf("Worker %s failed\n", workerName)
 		} else {
