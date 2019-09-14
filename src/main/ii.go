@@ -37,7 +37,7 @@ func reduceF(key string, values []string) string {
 	var documents string
 	counter := 0
 	for key, _ := range m {
-		if counter != len(m) {
+		if counter != len(m)-1 {
 			documents += key + ","
 		} else {
 			documents += key
