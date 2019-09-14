@@ -21,7 +21,7 @@ func mapF(document string, value string) (res []mapreduce.KeyValue) {
 	for _, v := range words {
 		result = append(result, mapreduce.KeyValue{v, document})
 	}
-
+	fmt.Println(result)
 	return result
 }
 
