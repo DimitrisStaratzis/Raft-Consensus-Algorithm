@@ -21,7 +21,6 @@ func mapF(document string, value string) (res []mapreduce.KeyValue) {
 	for _, v := range words {
 		result = append(result, mapreduce.KeyValue{v, document})
 	}
-	fmt.Println(result)
 	return result
 }
 
@@ -39,7 +38,7 @@ func reduceF(key string, values []string) string {
 		}
 		counter++
 	}
-	result := key + " " + strconv.Itoa(counter) + documents
+	result := key + " " + strconv.Itoa(counter) + " " + documents
 	return result
 }
 
