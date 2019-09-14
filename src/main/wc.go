@@ -15,7 +15,6 @@ import (
 // and the value is the file's contents. The return value should be a slice of
 // key/value pairs, each represented by a mapreduce.KeyValue.
 func mapF(document string, value string) (res []mapreduce.KeyValue) {
-	// TODO: you have to write this function
 	result := make([]mapreduce.KeyValue, 0)
 	words := strings.FieldsFunc(value, isWord)
 	for _, value := range words {
@@ -32,7 +31,6 @@ func isWord(r rune) bool {
 // list of that key's string value (merged across all inputs). The return value
 // should be a single output value for that key.
 func reduceF(key string, values []string) string {
-	// TODO: you also have to write this function
 	result := 0
 	for _, value := range values {
 		valueToInt, err := strconv.Atoi(value)
