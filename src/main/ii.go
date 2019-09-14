@@ -44,7 +44,7 @@ func reduceF(key string, values []string) string {
 		}
 		counter++
 	}
-	result := key + " " + strconv.Itoa(counter) + " " + documents
+	result := " " + strconv.Itoa(counter) + " " + documents
 	return result
 }
 
