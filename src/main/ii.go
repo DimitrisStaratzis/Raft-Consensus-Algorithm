@@ -2,6 +2,7 @@ package main
 
 import (
 	"os"
+	"sort"
 	"strconv"
 	"strings"
 	"unicode"
@@ -30,17 +31,26 @@ func isWord(r rune) bool {
 // list of that key's string value (merged across all inputs). The return value
 // should be a single output value for that key.
 func reduceF(key string, values []string) string {
+
+	//remove duplicates
 	m := make(map[string]int)
 	for key, value := range values {
 		m[value] = key
 	}
+	//create an array of unique keys
+	names := make([]string, 0)
+	for key, _ := range m {
+		names = append(names, key)
+	}
+	sort.Strings(names)
+
 	var documents string
 	counter := 0
-	for key, _ := range m {
-		if counter != len(m)-1 {
-			documents += key + ","
+	for _, value := range names {
+		if counter != len(names)-1 {
+			documents += value + ","
 		} else {
-			documents += key
+			documents += value
 		}
 		counter++
 	}
