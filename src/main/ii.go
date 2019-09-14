@@ -21,6 +21,7 @@ func mapF(document string, value string) (res []mapreduce.KeyValue) {
 	for _, v := range words {
 		result = append(result, mapreduce.KeyValue{v, document})
 	}
+
 	return result
 }
 
@@ -31,7 +32,7 @@ func reduceF(key string, values []string) string {
 	var documents string
 	counter := 0
 	for _, value := range values {
-		if counter != len(value) {
+		if counter != len(values) {
 			documents += value + ","
 		} else {
 			documents += value
