@@ -17,13 +17,15 @@ package raft
 //   in the same server.
 //
 
-import "sync"
+import (
+	"fmt"
+	"sync"
+	"time"
+)
 import "labrpc"
 
 // import "bytes"
 // import "encoding/gob"
-
-
 
 //
 // as each Raft peer becomes aware that successive log entries are
@@ -49,7 +51,11 @@ type Raft struct {
 	// Your data here (2A, 2B, 2C).
 	// Look at the paper's Figure 2 for a description of what
 	// state a Raft server must maintain.
-
+	state                 int //0 for follower, 1 for candidate, 2 for leader
+	previousHeartBeatTime int64
+	electionTimeThreshold int64
+	leaderID              int
+	applyChan             chan ApplyMsg
 }
 
 // return currentTerm and whether this server
@@ -58,6 +64,11 @@ func (rf *Raft) GetState() (int, bool) {
 
 	var term int
 	var isleader bool
+	if rf.state == 2 {
+		isleader = true
+	} else {
+		isleader = false
+	}
 	// Your code here (2A).
 	return term, isleader
 }
@@ -92,9 +103,6 @@ func (rf *Raft) readPersist(data []byte) {
 		return
 	}
 }
-
-
-
 
 //
 // example RequestVote RPC arguments structure.
@@ -153,7 +161,6 @@ func (rf *Raft) sendRequestVote(server int, args *RequestVoteArgs, reply *Reques
 	return ok
 }
 
-
 //
 // the service using Raft (e.g. a k/v server) wants to start
 // agreement on the next command to be appended to Raft's log. if this
@@ -174,7 +181,6 @@ func (rf *Raft) Start(command interface{}) (int, int, bool) {
 
 	// Your code here (2B).
 
-
 	return index, term, isLeader
 }
 
@@ -186,6 +192,28 @@ func (rf *Raft) Start(command interface{}) (int, int, bool) {
 //
 func (rf *Raft) Kill() {
 	// Your code here, if desired.
+}
+
+func (rf *Raft) startServer() {
+	//wait for heartbeats
+	for {
+		//if not leader
+		if rf.state == 0 || rf.state == 1 {
+			rf.mu.Lock()
+			timeSinceLastHeartbeat := time.Now().UnixNano() - rf.previousHeartBeatTime
+			if timeSinceLastHeartbeat > rf.electionTimeThreshold {
+				rf.state = 1
+				fmt.Println("TIME OUT")
+				startElection()
+			}
+			rf.mu.Lock()
+		}
+
+	}
+}
+
+func startElection() {
+
 }
 
 //
@@ -205,12 +233,16 @@ func Make(peers []*labrpc.ClientEnd, me int,
 	rf.peers = peers
 	rf.persister = persister
 	rf.me = me
+	rf.state = 0
+	rf.previousHeartBeatTime = -1
+	rf.electionTimeThreshold = 200
+	rf.applyChan = applyCh
 
+	go rf.startServer()
 	// Your initialization code here (2A, 2B, 2C).
 
 	// initialize from state persisted before a crash
 	rf.readPersist(persister.ReadRaftState())
-
 
 	return rf
 }
