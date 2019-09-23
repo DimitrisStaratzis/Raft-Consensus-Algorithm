@@ -39,6 +39,11 @@ type ApplyMsg struct {
 	Snapshot    []byte // ignore for lab2; only used in lab3
 }
 
+type LogEntry struct {
+	Term    int
+	Command interface{}
+}
+
 //
 // A Go object implementing a single Raft peer.
 //
@@ -56,6 +61,11 @@ type Raft struct {
 	electionTimeThreshold int64
 	leaderID              int
 	applyChan             chan ApplyMsg
+	Log                   []LogEntry
+	currentTerm           int
+	votesFor              int //index
+	commitIndex           int
+	lastApplied           int
 }
 
 // return currentTerm and whether this server
@@ -110,6 +120,10 @@ func (rf *Raft) readPersist(data []byte) {
 //
 type RequestVoteArgs struct {
 	// Your data here (2A, 2B).
+	term         int
+	candidateID  int
+	lastLogIndex int
+	lastLogTerm  int
 }
 
 //
@@ -118,6 +132,8 @@ type RequestVoteArgs struct {
 //
 type RequestVoteReply struct {
 	// Your data here (2A).
+	term        int
+	voteGranted bool
 }
 
 //
@@ -201,18 +217,61 @@ func (rf *Raft) startServer() {
 		if rf.state == 0 || rf.state == 1 {
 			rf.mu.Lock()
 			timeSinceLastHeartbeat := time.Now().UnixNano() - rf.previousHeartBeatTime
-			if timeSinceLastHeartbeat > rf.electionTimeThreshold {
+			if timeSinceLastHeartbeat > rf.electionTimeThreshold && rf.previousHeartBeatTime != -1 {
 				rf.state = 1
-				fmt.Println("TIME OUT")
-				startElection()
+				rf.currentTerm += 1
+				//fmt.Println("TIME OUT")
+				rf.startElection() //thelei GO?
+			} else {
+				rf.previousHeartBeatTime = time.Now().UnixNano()
 			}
-			rf.mu.Lock()
+			rf.mu.Unlock()
 		}
 
 	}
 }
 
-func startElection() {
+func (rf *Raft) startElection() {
+
+	//now send requests to all other peers to vote for rf by using the sendRequest
+	rf.mu.Lock()
+	fmt.Println("Election starts ")
+	rf.votesFor = rf.me
+
+	go decideLeader(rf)
+	rf.mu.Unlock()
+
+}
+
+func decideLeader(rf *Raft) {
+	votesNeeded := (len(rf.peers)) % 2 //votes needed except the one rf gives to itself
+	var votesReceived int
+	lastLogIndex := len(rf.Log)
+	args := RequestVoteArgs{
+		term:         rf.currentTerm,
+		candidateID:  rf.me,
+		lastLogIndex: lastLogIndex,
+		lastLogTerm:  rf.Log[lastLogIndex].Term}
+	var reply RequestVoteReply
+	for i, _ := range rf.peers {
+		voteStatus := rf.sendRequestVote(i, &args, &reply)
+		if voteStatus == false {
+			fmt.Println("voting failed") //todo WRITE MORE INFO
+
+		}
+		if reply.voteGranted {
+			votesReceived++
+		}
+
+		if votesReceived >= votesNeeded {
+			rf.mu.Lock()
+			rf.state = 2
+			rf.leaderID = rf.me
+			rf.mu.Unlock()
+
+		}
+
+	}
 
 }
 
@@ -237,6 +296,10 @@ func Make(peers []*labrpc.ClientEnd, me int,
 	rf.previousHeartBeatTime = -1
 	rf.electionTimeThreshold = 200
 	rf.applyChan = applyCh
+	rf.currentTerm = 0
+	rf.votesFor = -1
+	rf.commitIndex = 0
+	rf.lastApplied = 0
 
 	go rf.startServer()
 	// Your initialization code here (2A, 2B, 2C).
