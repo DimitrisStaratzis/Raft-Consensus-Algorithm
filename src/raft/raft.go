@@ -262,10 +262,10 @@ func (rf *Raft) startServer() {
 		if rf.state == 0 || rf.state == 1 {
 			rf.mu.Lock()
 			timeSinceLastHeartbeat := time.Now().UnixNano() - rf.previousHeartBeatTime
-			fmt.Println(string(timeSinceLastHeartbeat) + " :time")
+			//fmt.Println(string(timeSinceLastHeartbeat) + " :time")
 			if timeSinceLastHeartbeat > (rf.electionTimeThreshold + randomElectionSeed*int64(rf.me)) {
 				rf.state = 1
-				fmt.Println("mphka gamw to mouni ths manas sou")
+				fmt.Println("MPHKA")
 				rf.currentTerm++
 				//fmt.Println("TIME OUT")
 				rf.startElection() //thelei GO?
@@ -283,9 +283,10 @@ func (rf *Raft) startServer() {
 
 func (rf *Raft) startElection() {
 
+	fmt.Println("Election starts1")
 	//now send requests to all other peers to vote for rf by using the sendRequest
 	rf.mu.Lock()
-	fmt.Println("Election starts ")
+	fmt.Println("Election starts2")
 	rf.votesFor = rf.me
 
 	go decideLeader(rf)
