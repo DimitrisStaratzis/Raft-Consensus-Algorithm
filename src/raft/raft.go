@@ -275,7 +275,6 @@ func (rf *Raft) startServer() {
 			rf.mu.Unlock()
 		} else {
 			rf.sendHeartBeats()
-			//TODO IF LEADER THEN SEND HEARTBEATS TO ALL PEERS
 		}
 
 	}
@@ -284,14 +283,11 @@ func (rf *Raft) startServer() {
 func (rf *Raft) startElection() {
 
 	fmt.Println("Election starts1")
-	fmt.Println(time.Now().UnixNano())
 	//now send requests to all other peers to vote for rf by using the sendRequest
-	rf.mu.Lock()
+
 	fmt.Println("Election starts2")
-	rf.votesFor = rf.me
 
 	go decideLeader(rf)
-	rf.mu.Unlock()
 
 }
 
@@ -323,6 +319,9 @@ func decideLeader(rf *Raft) {
 		LastLogIndex: lastLogIndex,
 		LastLogTerm:  rf.Log[lastLogIndex].Term}
 	var reply RequestVoteReply
+	rf.mu.Lock()
+	rf.votesFor = rf.me //vote myself
+	rf.mu.Unlock()
 	//TODO H ILOPOIHSH AUTH EINAI SIRIAKH, NOMIZW PREPEI NA STELNEIS SE THREASD TA REQUEST VOTE KAI NA PAREIS META TA SVSTA
 	for i, _ := range rf.peers {
 		voteStatus := rf.sendRequestVote(i, &args, &reply) //TODO TSEKARE AN EINAI THREAD H AN THA EPISTREPSEI AMESWS
