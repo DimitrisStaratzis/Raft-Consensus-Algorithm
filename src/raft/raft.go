@@ -282,16 +282,15 @@ func (rf *Raft) startServer() {
 			rf.mu.Lock()
 			timeSinceLastHeartbeat := time.Now().UnixNano() - rf.previousHeartBeatTime
 			//fmt.Println(string(timeSinceLastHeartbeat) + " :time")
-			if (timeSinceLastHeartbeat > (rf.electionTimeThreshold + randomElectionSeed*int64(rf.me))) && ((time.Now().UnixNano() - rf.lastElectionStarted) > 50) {//todo variables
+			if (timeSinceLastHeartbeat > (rf.electionTimeThreshold + randomElectionSeed*int64(rf.me))) && ((time.Now().UnixNano() - rf.lastElectionStarted) > 50) { //todo variables
 
 				fmt.Println("LEADER DISCONNECTED")
 				startElection(rf)
 				//rf.resetPeerVotes()
 				//fmt.Println("TIME OUT")
 				//if time.Now().UnixNano()-rf.lastElectionStarted > 100 {
-					 //thelei GO?
-				}
-
+				//thelei GO?
+				//
 			} else {
 				rf.previousHeartBeatTime = time.Now().UnixNano()
 			}
