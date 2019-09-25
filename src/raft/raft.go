@@ -192,10 +192,11 @@ func (rf *Raft) AppendEntries(args *AppendEntriesArgs, reply *AppendEntriesReply
 		reply.Success = false
 	} else {
 		reply.Success = true
+		rf.mu.Lock()
+		rf.previousHeartBeatTime = time.Now().UnixNano()
+		rf.mu.Unlock()
 	}
-	rf.mu.Lock()
-	rf.previousHeartBeatTime = time.Now().UnixNano()
-	rf.mu.Unlock()
+
 }
 
 //
