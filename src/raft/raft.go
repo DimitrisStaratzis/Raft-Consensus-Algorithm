@@ -18,7 +18,6 @@ package raft
 //
 
 import (
-	"fmt"
 	//"fmt"
 	//"fmt"
 	"sync"
@@ -69,7 +68,6 @@ type Raft struct {
 	commitIndex           int
 	lastApplied           int
 	lastTermToVote        int
-	lastElectionStarted   int64
 }
 
 // return currentTerm and whether this server
@@ -170,17 +168,14 @@ func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
 			reply.VoteGranted = true
 			rf.mu.Lock()
 			rf.votesFor = args.CandidateID
-			fmt.Println("se psifisa")
 			//rf.state = 0 //TODO CHECK IF BECOMES FOLLOWER AGAIN
 			rf.mu.Unlock()
 		} else {
-			fmt.Println("den se psifisa")
 			reply.VoteGranted = false
 		}
 	} else if rf.lastTermToVote == args.Term {
 		if rf.votesFor == args.CandidateID { // if i have prev voted vote again
 			reply.VoteGranted = true
-			fmt.Println("se ksana psifisa")
 		} else {
 			//i have voted another server
 		}
@@ -190,12 +185,13 @@ func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
 
 func (rf *Raft) AppendEntries(args *AppendEntriesArgs, reply *AppendEntriesReply) {
 	// Your code here (2A, 2B).
-	if args.Term < rf.currentTerm {
-		reply.Success = false
-		reply.Term = rf.currentTerm
-	} else {
-		rf.previousHeartBeatTime = time.Now().UnixNano()
+	if args.Term > rf.currentTerm {
+		//step down from being a leader
+		rf.mu.Lock()
+		rf.state = 0
+		rf.mu.Unlock()
 	}
+	rf.previousHeartBeatTime = time.Now().UnixNano()
 
 }
 
@@ -275,22 +271,20 @@ func (rf *Raft) startServer() {
 	//wait for heartbeats
 
 	var randomElectionSeed int64
-	randomElectionSeed = 50
+	randomElectionSeed = 10
 	for {
 		//if not leader
 		if rf.state == 0 || rf.state == 1 {
 			rf.mu.Lock()
 			timeSinceLastHeartbeat := time.Now().UnixNano() - rf.previousHeartBeatTime
 			//fmt.Println(string(timeSinceLastHeartbeat) + " :time")
-			if (timeSinceLastHeartbeat > (rf.electionTimeThreshold + randomElectionSeed*int64(rf.me))) && ((time.Now().UnixNano() - rf.lastElectionStarted) > 50) { //todo variables
-
-				fmt.Println("LEADER DISCONNECTED")
-				startElection(rf)
+			if timeSinceLastHeartbeat > (rf.electionTimeThreshold + randomElectionSeed*int64(rf.me)) {
+				rf.state = 1
+				//fmt.Println("MPHKA")
+				rf.currentTerm++
 				//rf.resetPeerVotes()
 				//fmt.Println("TIME OUT")
-				//if time.Now().UnixNano()-rf.lastElectionStarted > 100 {
-				//thelei GO?
-				//
+				rf.startElection() //thelei GO?
 			} else {
 				rf.previousHeartBeatTime = time.Now().UnixNano()
 			}
@@ -302,58 +296,14 @@ func (rf *Raft) startServer() {
 	}
 }
 
-func startElection(rf *Raft) {
-	fmt.Println("ELECTION STARTS")
-	//rf.mu.Lock()
-	rf.state = 1
-	rf.votesFor = rf.me //vote myself
-	rf.lastElectionStarted = time.Now().UnixNano()
-	rf.currentTerm += 1 //increase current term
-	//rf.mu.Unlock()
+func (rf *Raft) startElection() {
 
-	fmt.Println("passed first locks ")
+	//fmt.Println("Election starts1")
+	//now send requests to all other peers to vote for rf by using the sendRequest
 
-	votesNeeded := (len(rf.peers)) % 2 //votes needed except the one rf gives to itself
-	var votesReceived int
-	lastLogIndex := len(rf.Log) - 1
+	//fmt.Println("Election starts2")
 
-	var args = RequestVoteArgs{}
-	args.Term = rf.currentTerm
-	args.CandidateID = rf.me
-
-	if lastLogIndex == -1 {
-		args.LastLogIndex = 0
-		args.LastLogTerm = 0
-	} else {
-		args.LastLogIndex = lastLogIndex
-		args.LastLogTerm = rf.Log[lastLogIndex].Term
-	}
-
-	fmt.Println("created arguments ")
-
-	var reply RequestVoteReply
-
-	//TODO H ILOPOIHSH AUTH EINAI SIRIAKH, NOMIZW PREPEI NA STELNEIS SE THREASD TA REQUEST VOTE KAI NA PAREIS META TA SVSTA
-	for i, _ := range rf.peers {
-		fmt.Println("send to peer")
-		voteStatus := rf.sendRequestVote(i, &args, &reply) //TODO TSEKARE AN EINAI THREAD H AN THA EPISTREPSEI AMESWS
-		if voteStatus == false {
-			//fmt.Println("voting failed") //todo WRITE MORE INFO
-		}
-		if reply.VoteGranted {
-			votesReceived++
-			fmt.Println("got vote")
-		}
-
-		if votesReceived >= votesNeeded {
-			rf.mu.Lock()
-			rf.state = 2
-			fmt.Println("WE HAVE LEADER")
-			rf.leaderID = rf.me
-			//TODO CHECK IF LEADER IS ONLY ONE.
-			rf.mu.Unlock()
-		}
-	}
+	go decideLeader(rf)
 
 }
 
@@ -371,10 +321,47 @@ func (rf *Raft) sendHeartBeats() {
 		if heartbeatStatus == false {
 			//fmt.Println("Heartbeat failed")
 		}
-		if reply.Success == false {
-			//step down from being leader
+	}
+
+}
+
+func decideLeader(rf *Raft) {
+	votesNeeded := (len(rf.peers)) % 2 //votes needed except the one rf gives to itself
+	var votesReceived int
+	lastLogIndex := len(rf.Log) - 1
+	var args = RequestVoteArgs{}
+
+	args.Term = rf.currentTerm
+	args.CandidateID = rf.me
+	if lastLogIndex == -1 {
+		args.LastLogIndex = 0
+		args.LastLogTerm = 0
+	} else {
+		args.LastLogIndex = lastLogIndex
+		args.LastLogTerm = rf.Log[lastLogIndex].Term
+	}
+
+	var reply RequestVoteReply
+	rf.mu.Lock()
+	rf.votesFor = rf.me //vote myself
+	rf.mu.Unlock()
+	//TODO H ILOPOIHSH AUTH EINAI SIRIAKH, NOMIZW PREPEI NA STELNEIS SE THREASD TA REQUEST VOTE KAI NA PAREIS META TA SVSTA
+	for i, _ := range rf.peers {
+		voteStatus := rf.sendRequestVote(i, &args, &reply) //TODO TSEKARE AN EINAI THREAD H AN THA EPISTREPSEI AMESWS
+		if voteStatus == false {
+			//fmt.Println("voting failed") //todo WRITE MORE INFO
+
+		}
+		if reply.VoteGranted {
+			votesReceived++
+		}
+
+		if votesReceived >= votesNeeded {
 			rf.mu.Lock()
-			rf.state = 0
+			rf.state = 2
+			//fmt.Println("WE HAVE LEADER")
+			rf.leaderID = rf.me
+			//TODO CHECK IF LEADER IS ONLY ONE.
 			rf.mu.Unlock()
 		}
 	}
@@ -407,7 +394,6 @@ func Make(peers []*labrpc.ClientEnd, me int,
 	rf.commitIndex = 0
 	rf.lastApplied = 0
 	rf.lastTermToVote = -1
-	rf.lastElectionStarted = -1
 
 	go rf.startServer()
 	// Your initialization code here (2A, 2B, 2C).
