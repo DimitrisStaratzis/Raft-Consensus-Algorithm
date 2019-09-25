@@ -161,9 +161,8 @@ type AppendEntriesReply struct {
 func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
 	// Your code here (2A, 2B).
 	reply.Term = rf.currentTerm
-	if rf.lastTermToVote < args.Term { // if server has not voted yet
+	if rf.votesFor == -1 { // if server has not voted yet
 		rf.lastTermToVote = args.Term
-		rf.votesFor = -1
 
 		if (rf.currentTerm <= args.Term) && len(rf.Log)-1 <= args.LastLogIndex {
 			reply.VoteGranted = true
@@ -174,14 +173,14 @@ func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
 		} else {
 			reply.VoteGranted = false
 		}
-	} else if rf.lastTermToVote == args.Term {
+	} /*else if rf.lastTermToVote == args.Term {
 		if rf.votesFor == args.CandidateID { // if i have prev voted vote again
 			reply.VoteGranted = true
 		} else {
 			//i have voted another server
 		}
 
-	}
+	}*/
 }
 
 func (rf *Raft) AppendEntries(args *AppendEntriesArgs, reply *AppendEntriesReply) {
