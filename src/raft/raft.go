@@ -18,6 +18,7 @@ package raft
 //
 
 import (
+	"fmt"
 	//"fmt"
 	//"fmt"
 	"sync"
@@ -279,11 +280,11 @@ func (rf *Raft) startServer() {
 			//fmt.Println(string(timeSinceLastHeartbeat) + " :time")
 			if timeSinceLastHeartbeat > (rf.electionTimeThreshold + randomElectionSeed*int64(rf.me)) {
 				rf.state = 1
-				//fmt.Println("MPHKA")
+				fmt.Println("LEDER DISCONNECTED")
 				rf.currentTerm += 1
 				//rf.resetPeerVotes()
 				//fmt.Println("TIME OUT")
-				rf.startElection() //thelei GO?
+				go startElection(rf) //thelei GO?
 			} else {
 				rf.previousHeartBeatTime = time.Now().UnixNano()
 			}
@@ -295,14 +296,48 @@ func (rf *Raft) startServer() {
 	}
 }
 
-func (rf *Raft) startElection() {
+func startElection(rf *Raft) {
+	fmt.Println("ELECTION STARTS")
+	votesNeeded := (len(rf.peers)) % 2 //votes needed except the one rf gives to itself
+	var votesReceived int
+	lastLogIndex := len(rf.Log) - 1
+	var args = RequestVoteArgs{}
+	args.Term = rf.currentTerm
+	args.CandidateID = rf.me
 
-	//fmt.Println("Election starts1")
-	//now send requests to all other peers to vote for rf by using the sendRequest
+	if lastLogIndex == -1 {
+		args.LastLogIndex = 0
+		args.LastLogTerm = 0
+	} else {
+		args.LastLogIndex = lastLogIndex
+		args.LastLogTerm = rf.Log[lastLogIndex].Term
+	}
 
-	//fmt.Println("Election starts2")
+	var reply RequestVoteReply
 
-	go decideLeader(rf)
+	rf.mu.Lock()
+	rf.votesFor = rf.me //vote myself
+	rf.mu.Unlock()
+
+	//TODO H ILOPOIHSH AUTH EINAI SIRIAKH, NOMIZW PREPEI NA STELNEIS SE THREASD TA REQUEST VOTE KAI NA PAREIS META TA SVSTA
+	for i, _ := range rf.peers {
+		voteStatus := rf.sendRequestVote(i, &args, &reply) //TODO TSEKARE AN EINAI THREAD H AN THA EPISTREPSEI AMESWS
+		if voteStatus == false {
+			//fmt.Println("voting failed") //todo WRITE MORE INFO
+		}
+		if reply.VoteGranted {
+			votesReceived++
+		}
+
+		if votesReceived >= votesNeeded {
+			rf.mu.Lock()
+			rf.state = 2
+			fmt.Println("WE HAVE LEADER")
+			rf.leaderID = rf.me
+			//TODO CHECK IF LEADER IS ONLY ONE.
+			rf.mu.Unlock()
+		}
+	}
 
 }
 
@@ -324,49 +359,6 @@ func (rf *Raft) sendHeartBeats() {
 			//step down from being leader
 			rf.mu.Lock()
 			rf.state = 0
-			rf.mu.Unlock()
-		}
-	}
-
-}
-
-func decideLeader(rf *Raft) {
-	votesNeeded := (len(rf.peers)) % 2 //votes needed except the one rf gives to itself
-	var votesReceived int
-	lastLogIndex := len(rf.Log) - 1
-	var args = RequestVoteArgs{}
-
-	args.Term = rf.currentTerm
-	args.CandidateID = rf.me
-	if lastLogIndex == -1 {
-		args.LastLogIndex = 0
-		args.LastLogTerm = 0
-	} else {
-		args.LastLogIndex = lastLogIndex
-		args.LastLogTerm = rf.Log[lastLogIndex].Term
-	}
-
-	var reply RequestVoteReply
-	rf.mu.Lock()
-	rf.votesFor = rf.me //vote myself
-	rf.mu.Unlock()
-	//TODO H ILOPOIHSH AUTH EINAI SIRIAKH, NOMIZW PREPEI NA STELNEIS SE THREASD TA REQUEST VOTE KAI NA PAREIS META TA SVSTA
-	for i, _ := range rf.peers {
-		voteStatus := rf.sendRequestVote(i, &args, &reply) //TODO TSEKARE AN EINAI THREAD H AN THA EPISTREPSEI AMESWS
-		if voteStatus == false {
-			//fmt.Println("voting failed") //todo WRITE MORE INFO
-
-		}
-		if reply.VoteGranted {
-			votesReceived++
-		}
-
-		if votesReceived >= votesNeeded {
-			rf.mu.Lock()
-			rf.state = 2
-			//fmt.Println("WE HAVE LEADER")
-			rf.leaderID = rf.me
-			//TODO CHECK IF LEADER IS ONLY ONE.
 			rf.mu.Unlock()
 		}
 	}
