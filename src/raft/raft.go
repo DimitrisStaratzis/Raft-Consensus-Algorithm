@@ -256,7 +256,7 @@ func (rf *Raft) startServer() {
 	//wait for heartbeats
 
 	var randomElectionSeed int64
-	randomElectionSeed = 100
+	randomElectionSeed = 10
 	for {
 		//if not leader
 		if rf.state == 0 || rf.state == 1 {
@@ -284,6 +284,7 @@ func (rf *Raft) startServer() {
 func (rf *Raft) startElection() {
 
 	fmt.Println("Election starts1")
+	fmt.Println(time.Now().UnixNano())
 	//now send requests to all other peers to vote for rf by using the sendRequest
 	rf.mu.Lock()
 	fmt.Println("Election starts2")
