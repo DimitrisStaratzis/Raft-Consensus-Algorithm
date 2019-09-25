@@ -256,7 +256,7 @@ func (rf *Raft) startServer() {
 	//wait for heartbeats
 
 	var randomElectionSeed int64
-	randomElectionSeed = 10
+	randomElectionSeed = 100
 	for {
 		//if not leader
 		if rf.state == 0 || rf.state == 1 {
