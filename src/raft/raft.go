@@ -68,6 +68,7 @@ type Raft struct {
 	commitIndex           int
 	lastApplied           int
 	lastTermToVote        int
+	electionStarted       int64
 }
 
 // return currentTerm and whether this server
@@ -280,7 +281,7 @@ func (rf *Raft) startServer() {
 			rf.mu.Lock()
 			timeSinceLastHeartbeat := time.Now().UnixNano() - rf.previousHeartBeatTime
 			//fmt.Println(string(timeSinceLastHeartbeat) + " :time")
-			if timeSinceLastHeartbeat > (rf.electionTimeThreshold + randomElectionSeed*int64(rf.me)) {
+			if timeSinceLastHeartbeat > (rf.electionTimeThreshold+randomElectionSeed*int64(rf.me)) && ((time.Now().UnixNano() - rf.electionStarted) > 50) {
 				rf.state = 1
 				//fmt.Println("MPHKA")
 				rf.currentTerm++
@@ -401,6 +402,7 @@ func Make(peers []*labrpc.ClientEnd, me int,
 	rf.commitIndex = 0
 	rf.lastApplied = 0
 	rf.lastTermToVote = -1
+	rf.electionStarted = -1
 
 	go rf.startServer()
 	// Your initialization code here (2A, 2B, 2C).
