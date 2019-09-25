@@ -317,7 +317,7 @@ func decideLeader(rf *Raft) {
 		Term:         rf.currentTerm,
 		CandidateID:  rf.me,
 		LastLogIndex: lastLogIndex,
-		LastLogTerm:  rf.Log[lastLogIndex].Term}
+		LastLogTerm:  rf.Log[lastLogIndex-1].Term}
 	var reply RequestVoteReply
 	rf.mu.Lock()
 	rf.votesFor = rf.me //vote myself
