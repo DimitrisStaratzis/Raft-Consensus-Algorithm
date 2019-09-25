@@ -141,6 +141,7 @@ type RequestVoteReply struct {
 //
 func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
 	// Your code here (2A, 2B).
+	reply.Term = rf.currentTerm
 	if rf.votesFor == -1 { // if server has not voted yet
 		if (rf.Log[len(rf.Log)-1].Term <= args.Term) && len(rf.Log)-1 <= args.LastLogIndex {
 			reply.VoteGranted = true
@@ -150,12 +151,11 @@ func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
 		} else {
 			reply.VoteGranted = false
 		}
-	} else { // I have previously voted for this leader and the vote was lost, send the vote again
-		if rf.votesFor == args.CandidateID {
-			reply.VoteGranted = true
-		}
+	} else if rf.votesFor == args.CandidateID { // if i have prev voted vote again
+		reply.VoteGranted = true
+	} else {
+		reply.VoteGranted = false
 	}
-
 }
 
 //
@@ -286,6 +286,7 @@ func decideLeader(rf *Raft) {
 		if votesReceived >= votesNeeded {
 			rf.mu.Lock()
 			rf.state = 2
+			fmt.Println("WE HAVE LEADER")
 			rf.leaderID = rf.me
 			//TODO CHECK IF LEADER IS ONLY ONE.
 			rf.mu.Unlock()
