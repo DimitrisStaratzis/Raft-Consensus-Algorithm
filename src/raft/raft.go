@@ -136,6 +136,21 @@ type RequestVoteReply struct {
 	VoteGranted bool
 }
 
+type AppendEntriesArgs struct {
+	Term         int
+	LeaderId     int
+	PrevLogIndex int
+	PrevLogTerm  int
+	Entries      []LogEntry
+	LeaderCommit int
+}
+
+type AppendEntriesReply struct {
+	Term         int
+	Success      bool
+	NextTryIndex int
+}
+
 //
 // example RequestVote RPC handler.
 //
@@ -147,6 +162,7 @@ func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
 			reply.VoteGranted = true
 			rf.mu.Lock()
 			rf.votesFor = args.CandidateID
+			rf.state = 0 //TODO CHECK IF BECOMES FOLLOWER AGAIN
 			rf.mu.Unlock()
 		} else {
 			reply.VoteGranted = false
@@ -156,6 +172,12 @@ func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
 	} else {
 		reply.VoteGranted = false
 	}
+}
+
+func (rf *Raft) AppendEntries(args *AppendEntriesArgs, reply *AppendEntriesReply) {
+	// Your code here (2A, 2B).
+	rf.previousHeartBeatTime = time.Now().UnixNano()
+
 }
 
 //
@@ -189,6 +211,11 @@ func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
 //
 func (rf *Raft) sendRequestVote(server int, args *RequestVoteArgs, reply *RequestVoteReply) bool {
 	ok := rf.peers[server].Call("Raft.RequestVote", args, reply)
+	return ok
+}
+
+func (rf *Raft) sendAppendEntries(server int, args *AppendEntriesArgs, reply *AppendEntriesReply) bool {
+	ok := rf.peers[server].Call("Raft.AppendEntries", args, reply)
 	return ok
 }
 
@@ -244,6 +271,7 @@ func (rf *Raft) startServer() {
 			}
 			rf.mu.Unlock()
 		} else {
+			rf.sendHeartBeats()
 			//TODO IF LEADER THEN SEND HEARTBEATS TO ALL PEERS
 		}
 
@@ -259,6 +287,24 @@ func (rf *Raft) startElection() {
 
 	go decideLeader(rf)
 	rf.mu.Unlock()
+
+}
+
+func (rf *Raft) sendHeartBeats() {
+	args := AppendEntriesArgs{
+		Term:         rf.currentTerm,
+		LeaderId:     rf.leaderID,
+		PrevLogIndex: 0, //todo se all the entries below again
+		PrevLogTerm:  0,
+		Entries:      rf.Log,
+		LeaderCommit: 0}
+	var reply AppendEntriesReply
+	for i, _ := range rf.peers {
+		heartbeatStatus := rf.sendAppendEntries(i, &args, &reply)
+		if heartbeatStatus == false {
+			fmt.Println("Heartbeat failed")
+		}
+	}
 
 }
 
