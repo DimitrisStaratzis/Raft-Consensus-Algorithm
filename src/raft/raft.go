@@ -370,12 +370,12 @@ func decideLeader(rf *Raft) {
 		}
 
 		if votesReceived >= votesNeeded {
-			rf.mu.Lock()
+			//rf.mu.Lock()
 			rf.state = 2
 			fmt.Println("WE HAVE LEADER")
 			rf.leaderID = rf.me
 			//TODO CHECK IF LEADER IS ONLY ONE.
-			rf.mu.Unlock()
+			//rf.mu.Unlock()
 		}
 	}
 
