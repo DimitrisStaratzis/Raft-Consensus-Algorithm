@@ -185,14 +185,16 @@ func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
 
 func (rf *Raft) AppendEntries(args *AppendEntriesArgs, reply *AppendEntriesReply) {
 	// Your code here (2A, 2B).
-	if args.Term > rf.currentTerm {
+	reply.Term = rf.currentTerm
+	if args.Term < rf.currentTerm {
 		//step down from being a leader
-		rf.mu.Lock()
-		rf.state = 0
-		rf.mu.Unlock()
+		reply.Success = false
+	} else {
+		reply.Success = true
 	}
+	rf.mu.Lock()
 	rf.previousHeartBeatTime = time.Now().UnixNano()
-
+	rf.mu.Unlock()
 }
 
 //
@@ -320,6 +322,11 @@ func (rf *Raft) sendHeartBeats() {
 		heartbeatStatus := rf.sendAppendEntries(i, &args, &reply)
 		if heartbeatStatus == false {
 			//fmt.Println("Heartbeat failed")
+		}
+		if reply.Success == false {
+			rf.mu.Lock()
+			rf.state = 0
+			rf.mu.Unlock()
 		}
 	}
 
