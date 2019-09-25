@@ -18,7 +18,7 @@ package raft
 //
 
 import (
-	"fmt"
+	//"fmt"
 	"sync"
 	"time"
 )
