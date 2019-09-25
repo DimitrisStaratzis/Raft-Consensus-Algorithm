@@ -165,9 +165,10 @@ func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
 	//} else {
 	//	rf.votesFor = -2
 	//}
-	reply.Term = rf.currentTerm
+	//reply.Term = rf.currentTerm
 	if rf.votesFor == -1 { // if server has not voted yet
 		//rf.lastTermToVote = args.Term
+		fmt.Println("mphka")
 		if (rf.currentTerm <= args.Term) && len(rf.Log)-1 <= args.LastLogIndex {
 			reply.VoteGranted = true
 			rf.votesFor = args.CandidateID
