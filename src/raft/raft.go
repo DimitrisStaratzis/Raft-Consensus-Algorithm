@@ -293,7 +293,7 @@ func (rf *Raft) startServer() {
 			}
 			rf.mu.Unlock()
 		} else {
-			rf.sendHeartBeats()
+			//rf.sendHeartBeats()
 		}
 
 	}
