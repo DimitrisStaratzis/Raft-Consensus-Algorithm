@@ -156,15 +156,14 @@ type AppendEntriesReply struct {
 //
 func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
 	// Your code here (2A, 2B).
-	rf.mu.Lock()
-	defer rf.mu.Unlock()
 	reply.Term = rf.currentTerm
 	if rf.votesFor == -1 { // if server has not voted yet
 		if (rf.currentTerm <= args.Term) && len(rf.Log)-1 <= args.LastLogIndex {
 			reply.VoteGranted = true
+			rf.mu.Lock()
 			rf.votesFor = args.CandidateID
 			rf.state = 0 //TODO CHECK IF BECOMES FOLLOWER AGAIN
-
+			rf.mu.Unlock()
 		} else {
 			reply.VoteGranted = false
 		}
@@ -258,12 +257,10 @@ func (rf *Raft) startServer() {
 
 	var randomElectionSeed int64
 	randomElectionSeed = 10
-	rf.mu.Lock()
-	defer rf.mu.Unlock()
 	for {
 		//if not leader
 		if rf.state == 0 || rf.state == 1 {
-
+			rf.mu.Lock()
 			timeSinceLastHeartbeat := time.Now().UnixNano() - rf.previousHeartBeatTime
 			//fmt.Println(string(timeSinceLastHeartbeat) + " :time")
 			if timeSinceLastHeartbeat > (rf.electionTimeThreshold + randomElectionSeed*int64(rf.me)) {
@@ -275,6 +272,7 @@ func (rf *Raft) startServer() {
 			} else {
 				rf.previousHeartBeatTime = time.Now().UnixNano()
 			}
+			rf.mu.Unlock()
 		} else {
 			rf.sendHeartBeat() //stelnei para polla heartbeats
 		}
@@ -316,8 +314,7 @@ func decideLeader(rf *Raft) {
 	var votesReceived int
 	lastLogIndex := len(rf.Log) - 1
 	var args = RequestVoteArgs{}
-	rf.mu.Lock()
-	defer rf.mu.Unlock()
+
 	args.Term = rf.currentTerm
 	args.CandidateID = rf.me
 	if lastLogIndex == -1 {
@@ -329,7 +326,9 @@ func decideLeader(rf *Raft) {
 	}
 
 	var reply RequestVoteReply
+	rf.mu.Lock()
 	rf.votesFor = rf.me //vote myself
+	rf.mu.Unlock()
 	//TODO H ILOPOIHSH AUTH EINAI SIRIAKH, NOMIZW PREPEI NA STELNEIS SE THREASD TA REQUEST VOTE KAI NA PAREIS META TA SVSTA
 	for i, _ := range rf.peers {
 		voteStatus := rf.sendRequestVote(i, &args, &reply) //TODO TSEKARE AN EINAI THREAD H AN THA EPISTREPSEI AMESWS
@@ -342,11 +341,12 @@ func decideLeader(rf *Raft) {
 		}
 
 		if votesReceived >= votesNeeded {
+			rf.mu.Lock()
 			rf.state = 2
 			//fmt.Println("WE HAVE LEADER")
 			rf.leaderID = rf.me
 			//TODO CHECK IF LEADER IS ONLY ONE.
-
+			rf.mu.Unlock()
 		}
 	}
 
