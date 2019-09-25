@@ -335,7 +335,7 @@ func (rf *Raft) sendHeartBeats() {
 }
 
 func decideLeader(rf *Raft) {
-	fmt.Print("ELECTION STARTS")
+	fmt.Println("ELECTION STARTS")
 	votesNeeded := (len(rf.peers)) % 2 //votes needed except the one rf gives to itself
 	var votesReceived int
 	lastLogIndex := len(rf.Log) - 1
@@ -352,12 +352,12 @@ func decideLeader(rf *Raft) {
 	}
 
 	var reply RequestVoteReply
-	rf.mu.Lock()
+	/*rf.mu.Lock()
 	rf.votesFor = rf.me //vote myself
-	rf.mu.Unlock()
+	rf.mu.Unlock()*/
 	//TODO H ILOPOIHSH AUTH EINAI SIRIAKH, NOMIZW PREPEI NA STELNEIS SE THREASD TA REQUEST VOTE KAI NA PAREIS META TA SVSTA
 	for i, _ := range rf.peers {
-		fmt.Print("PEER SENT")
+		fmt.Println("PEER SENT")
 		voteStatus := rf.sendRequestVote(i, &args, &reply) //TODO TSEKARE AN EINAI THREAD H AN THA EPISTREPSEI AMESWS
 		if voteStatus == false {
 			//fmt.Println("voting failed") //todo WRITE MORE INFO
@@ -365,7 +365,7 @@ func decideLeader(rf *Raft) {
 		}
 		if reply.VoteGranted {
 			votesReceived++
-			fmt.Print("VOTE ++")
+			fmt.Println("VOTE ++")
 		}
 
 		if votesReceived >= votesNeeded {
