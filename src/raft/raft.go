@@ -160,14 +160,14 @@ type AppendEntriesReply struct {
 //
 func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
 	// Your code here (2A, 2B).
-	if rf.lastTermToVote < args.Term {
-		rf.votesFor = -1
-	} else {
-		rf.votesFor = -2
-	}
+	//if rf.lastTermToVote < args.Term {
+	//	rf.votesFor = -1
+	//} else {
+	//	rf.votesFor = -2
+	//}
 	reply.Term = rf.currentTerm
 	if rf.votesFor == -1 { // if server has not voted yet
-		rf.lastTermToVote = args.Term
+		//rf.lastTermToVote = args.Term
 		if (rf.currentTerm <= args.Term) && len(rf.Log)-1 <= args.LastLogIndex {
 			reply.VoteGranted = true
 			rf.votesFor = args.CandidateID
@@ -277,7 +277,7 @@ func (rf *Raft) startServer() {
 	//wait for heartbeats
 
 	var randomElectionSeed int64
-	randomElectionSeed = 300
+	randomElectionSeed = 30
 	for {
 		//if not leader
 		if rf.state == 0 || rf.state == 1 {
