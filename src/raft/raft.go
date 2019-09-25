@@ -169,6 +169,7 @@ func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
 			reply.VoteGranted = true
 			rf.mu.Lock()
 			rf.votesFor = args.CandidateID
+			fmt.Println("psifisa")
 			//rf.state = 0 //TODO CHECK IF BECOMES FOLLOWER AGAIN
 			rf.mu.Unlock()
 		} else {
