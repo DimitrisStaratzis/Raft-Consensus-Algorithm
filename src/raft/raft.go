@@ -172,10 +172,13 @@ func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
 		} else {
 			reply.VoteGranted = false
 		}
-	} else if rf.votesFor == args.CandidateID { // if i have prev voted vote again
-		reply.VoteGranted = true
-	} else {
-		reply.VoteGranted = false
+	} else if rf.lastTermToVote == args.Term {
+		if rf.votesFor == args.CandidateID { // if i have prev voted vote again
+			reply.VoteGranted = true
+		} else {
+			//i have voted another server
+		}
+
 	}
 }
 
