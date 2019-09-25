@@ -156,7 +156,9 @@ type AppendEntriesReply struct {
 //
 func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
 	// Your code here (2A, 2B).
+	rf.mu.Lock()
 	reply.Term = rf.currentTerm
+	rf.mu.Unlock()
 	if rf.votesFor == -1 { // if server has not voted yet
 		if (rf.currentTerm <= args.Term) && len(rf.Log)-1 <= args.LastLogIndex {
 			reply.VoteGranted = true
@@ -274,7 +276,7 @@ func (rf *Raft) startServer() {
 			}
 			rf.mu.Unlock()
 		} else {
-			rf.sendHeartBeats()
+			rf.sendHeartBeat() //stelnei para polla heartbeats
 		}
 
 	}
@@ -291,7 +293,7 @@ func (rf *Raft) startElection() {
 
 }
 
-func (rf *Raft) sendHeartBeats() {
+func (rf *Raft) sendHeartBeat() {
 	args := AppendEntriesArgs{
 		Term:         rf.currentTerm,
 		LeaderId:     rf.leaderID,
@@ -314,7 +316,7 @@ func decideLeader(rf *Raft) {
 	var votesReceived int
 	lastLogIndex := len(rf.Log) - 1
 	var args = RequestVoteArgs{}
-
+	rf.mu.Lock()
 	args.Term = rf.currentTerm
 	args.CandidateID = rf.me
 	if lastLogIndex == -1 {
@@ -326,7 +328,6 @@ func decideLeader(rf *Raft) {
 	}
 
 	var reply RequestVoteReply
-	rf.mu.Lock()
 	rf.votesFor = rf.me //vote myself
 	rf.mu.Unlock()
 	//TODO H ILOPOIHSH AUTH EINAI SIRIAKH, NOMIZW PREPEI NA STELNEIS SE THREASD TA REQUEST VOTE KAI NA PAREIS META TA SVSTA
