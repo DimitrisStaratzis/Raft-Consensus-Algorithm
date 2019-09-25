@@ -188,8 +188,9 @@ func (rf *Raft) AppendEntries(args *AppendEntriesArgs, reply *AppendEntriesReply
 	if args.Term < rf.currentTerm {
 		reply.Success = false
 		reply.Term = rf.currentTerm
+	} else {
+		rf.previousHeartBeatTime = time.Now().UnixNano()
 	}
-	rf.previousHeartBeatTime = time.Now().UnixNano()
 
 }
 
@@ -279,7 +280,7 @@ func (rf *Raft) startServer() {
 			if timeSinceLastHeartbeat > (rf.electionTimeThreshold + randomElectionSeed*int64(rf.me)) {
 				rf.state = 1
 				//fmt.Println("MPHKA")
-				rf.currentTerm++
+				rf.currentTerm += 1
 				//rf.resetPeerVotes()
 				//fmt.Println("TIME OUT")
 				rf.startElection() //thelei GO?
