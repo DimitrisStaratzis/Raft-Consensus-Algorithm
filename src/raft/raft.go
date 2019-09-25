@@ -164,13 +164,13 @@ func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
 	if rf.lastTermToVote < args.Term { // if server has not voted yet
 		rf.lastTermToVote = args.Term
 		rf.votesFor = -1
-		fmt.Print("DEADLOCK NO")
+
 		if (rf.currentTerm <= args.Term) && len(rf.Log)-1 <= args.LastLogIndex {
 			reply.VoteGranted = true
-			rf.mu.Lock()
+			//rf.mu.Lock()
 			rf.votesFor = args.CandidateID
 			//rf.state = 0 //TODO CHECK IF BECOMES FOLLOWER AGAIN
-			rf.mu.Unlock()
+			//rf.mu.Unlock()
 		} else {
 			reply.VoteGranted = false
 		}
