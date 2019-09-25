@@ -312,12 +312,18 @@ func (rf *Raft) sendHeartBeats() {
 func decideLeader(rf *Raft) {
 	votesNeeded := (len(rf.peers)) % 2 //votes needed except the one rf gives to itself
 	var votesReceived int
-	lastLogIndex := len(rf.Log)
-	args := RequestVoteArgs{
-		Term:         rf.currentTerm,
-		CandidateID:  rf.me,
-		LastLogIndex: lastLogIndex,
-		LastLogTerm:  rf.Log[lastLogIndex-1].Term}
+	lastLogIndex := len(rf.Log) - 1
+	var args = RequestVoteArgs{}
+
+	args.Term = rf.currentTerm
+	args.CandidateID = rf.me
+	if lastLogIndex == -1 {
+		args.LastLogIndex = 0
+		args.LastLogTerm = 0
+	}
+	args.LastLogIndex = lastLogIndex
+	args.LastLogTerm = rf.Log[lastLogIndex].Term
+
 	var reply RequestVoteReply
 	rf.mu.Lock()
 	rf.votesFor = rf.me //vote myself
