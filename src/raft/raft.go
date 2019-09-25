@@ -262,8 +262,10 @@ func (rf *Raft) startServer() {
 		if rf.state == 0 || rf.state == 1 {
 			rf.mu.Lock()
 			timeSinceLastHeartbeat := time.Now().UnixNano() - rf.previousHeartBeatTime
-			if (timeSinceLastHeartbeat > (rf.electionTimeThreshold + randomElectionSeed*int64(rf.me))) && rf.previousHeartBeatTime != -1 {
+			fmt.Println(string(timeSinceLastHeartbeat) + " :time")
+			if timeSinceLastHeartbeat > (rf.electionTimeThreshold + randomElectionSeed*int64(rf.me)) {
 				rf.state = 1
+				fmt.Println("mphka gamw to mouni ths manas sou")
 				rf.currentTerm++
 				//fmt.Println("TIME OUT")
 				rf.startElection() //thelei GO?
