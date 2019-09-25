@@ -254,6 +254,7 @@ func (rf *Raft) Kill() {
 
 func (rf *Raft) startServer() {
 	//wait for heartbeats
+
 	var randomElectionSeed int64
 	randomElectionSeed = 10
 	for {
@@ -359,7 +360,7 @@ func Make(peers []*labrpc.ClientEnd, me int,
 	rf.persister = persister
 	rf.me = me
 	rf.state = 0
-	rf.previousHeartBeatTime = -1
+	rf.previousHeartBeatTime = time.Now().UnixNano()
 	rf.electionTimeThreshold = 200
 	rf.applyChan = applyCh
 	rf.currentTerm = 0
