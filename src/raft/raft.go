@@ -280,11 +280,11 @@ func (rf *Raft) startServer() {
 			//fmt.Println(string(timeSinceLastHeartbeat) + " :time")
 			if timeSinceLastHeartbeat > (rf.electionTimeThreshold + randomElectionSeed*int64(rf.me)) {
 				rf.state = 1
-				fmt.Println("LEDER DISCONNECTED")
+				fmt.Println("LEADER DISCONNECTED")
 				rf.currentTerm += 1
 				//rf.resetPeerVotes()
 				//fmt.Println("TIME OUT")
-				go startElection(rf) //thelei GO?
+				startElection(rf) //thelei GO?
 			} else {
 				rf.previousHeartBeatTime = time.Now().UnixNano()
 			}
