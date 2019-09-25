@@ -162,10 +162,8 @@ func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
 	// Your code here (2A, 2B).
 	reply.Term = rf.currentTerm
 	if rf.lastTermToVote < args.Term { // if server has not voted yet
-		rf.mu.Lock()
 		rf.lastTermToVote = args.Term
 		rf.votesFor = -1
-		rf.mu.Unlock()
 		fmt.Print("DEADLOCK NO")
 		if (rf.currentTerm <= args.Term) && len(rf.Log)-1 <= args.LastLogIndex {
 			reply.VoteGranted = true
