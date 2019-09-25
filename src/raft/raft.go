@@ -324,12 +324,14 @@ func startElection(rf *Raft) {
 
 	//TODO H ILOPOIHSH AUTH EINAI SIRIAKH, NOMIZW PREPEI NA STELNEIS SE THREASD TA REQUEST VOTE KAI NA PAREIS META TA SVSTA
 	for i, _ := range rf.peers {
+		fmt.Println("send to peer ")
 		voteStatus := rf.sendRequestVote(i, &args, &reply) //TODO TSEKARE AN EINAI THREAD H AN THA EPISTREPSEI AMESWS
 		if voteStatus == false {
 			//fmt.Println("voting failed") //todo WRITE MORE INFO
 		}
 		if reply.VoteGranted {
 			votesReceived++
+			fmt.Println("got vote")
 		}
 
 		if votesReceived >= votesNeeded {
