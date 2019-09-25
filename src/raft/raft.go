@@ -169,15 +169,17 @@ func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
 			reply.VoteGranted = true
 			rf.mu.Lock()
 			rf.votesFor = args.CandidateID
-			fmt.Println("psifisa")
+			fmt.Println("se psifisa")
 			//rf.state = 0 //TODO CHECK IF BECOMES FOLLOWER AGAIN
 			rf.mu.Unlock()
 		} else {
+			fmt.Println("den se psifisa")
 			reply.VoteGranted = false
 		}
 	} else if rf.lastTermToVote == args.Term {
 		if rf.votesFor == args.CandidateID { // if i have prev voted vote again
 			reply.VoteGranted = true
+			fmt.Println("se ksana psifisa")
 		} else {
 			//i have voted another server
 		}
@@ -282,7 +284,6 @@ func (rf *Raft) startServer() {
 			if timeSinceLastHeartbeat > (rf.electionTimeThreshold + randomElectionSeed*int64(rf.me)) {
 				rf.state = 1
 				fmt.Println("LEADER DISCONNECTED")
-				rf.currentTerm += 1
 				//rf.resetPeerVotes()
 				//fmt.Println("TIME OUT")
 				startElection(rf) //thelei GO?
@@ -299,6 +300,7 @@ func (rf *Raft) startServer() {
 
 func startElection(rf *Raft) {
 	fmt.Println("ELECTION STARTS")
+	rf.currentTerm += 1
 	votesNeeded := (len(rf.peers)) % 2 //votes needed except the one rf gives to itself
 	var votesReceived int
 	lastLogIndex := len(rf.Log) - 1
