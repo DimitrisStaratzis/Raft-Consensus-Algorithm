@@ -305,7 +305,7 @@ func (rf *Raft) startElection() {
 
 	//fmt.Println("Election starts2")
 
-	go decideLeader(rf)
+	decideLeader(rf)
 
 }
 
