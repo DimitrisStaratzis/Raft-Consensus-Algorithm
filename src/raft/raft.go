@@ -162,7 +162,7 @@ func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
 			reply.VoteGranted = true
 			rf.mu.Lock()
 			rf.votesFor = args.CandidateID
-			rf.state = 0 //TODO CHECK IF BECOMES FOLLOWER AGAIN
+			//rf.state = 0 //TODO CHECK IF BECOMES FOLLOWER AGAIN
 			rf.mu.Unlock()
 		} else {
 			reply.VoteGranted = false
@@ -176,6 +176,12 @@ func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
 
 func (rf *Raft) AppendEntries(args *AppendEntriesArgs, reply *AppendEntriesReply) {
 	// Your code here (2A, 2B).
+	if args.Term > rf.currentTerm {
+		//step down from being a leader
+		rf.mu.Lock()
+		rf.state = 0
+		rf.mu.Unlock()
+	}
 	rf.previousHeartBeatTime = time.Now().UnixNano()
 
 }
@@ -274,7 +280,7 @@ func (rf *Raft) startServer() {
 			}
 			rf.mu.Unlock()
 		} else {
-			rf.sendHeartBeat() //stelnei para polla heartbeats
+			rf.sendHeartBeats()
 		}
 
 	}
@@ -291,7 +297,7 @@ func (rf *Raft) startElection() {
 
 }
 
-func (rf *Raft) sendHeartBeat() {
+func (rf *Raft) sendHeartBeats() {
 	args := AppendEntriesArgs{
 		Term:         rf.currentTerm,
 		LeaderId:     rf.leaderID,
