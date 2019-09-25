@@ -365,6 +365,8 @@ func decideLeader(rf *Raft) {
 		if reply.VoteGranted {
 			votesReceived++
 			fmt.Println("VOTE ++")
+			fmt.Print(votesReceived)
+			fmt.Print(votesNeeded)
 		}
 
 		if votesReceived >= votesNeeded {
