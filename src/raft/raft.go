@@ -288,12 +288,10 @@ func (rf *Raft) startServer() {
 				//rf.resetPeerVotes()
 				//fmt.Println("TIME OUT")
 				rf.startElection() //thelei GO?
-			} else {
-				rf.previousHeartBeatTime = time.Now().UnixNano()
 			}
 			rf.mu.Unlock()
 		} else {
-			//rf.sendHeartBeats()
+			rf.sendHeartBeats()
 		}
 
 	}
