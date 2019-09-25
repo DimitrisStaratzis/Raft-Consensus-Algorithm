@@ -300,10 +300,17 @@ func (rf *Raft) startServer() {
 
 func startElection(rf *Raft) {
 	fmt.Println("ELECTION STARTS")
-	rf.currentTerm += 1
+	rf.mu.Lock()
+	rf.votesFor = rf.me //vote myself
+	rf.currentTerm += 1 //increase current term
+	rf.mu.Unlock()
+
+	fmt.Println("passed first locks ")
+
 	votesNeeded := (len(rf.peers)) % 2 //votes needed except the one rf gives to itself
 	var votesReceived int
 	lastLogIndex := len(rf.Log) - 1
+
 	var args = RequestVoteArgs{}
 	args.Term = rf.currentTerm
 	args.CandidateID = rf.me
@@ -316,11 +323,9 @@ func startElection(rf *Raft) {
 		args.LastLogTerm = rf.Log[lastLogIndex].Term
 	}
 
-	var reply RequestVoteReply
+	fmt.Println("created arguments ")
 
-	rf.mu.Lock()
-	rf.votesFor = rf.me //vote myself
-	rf.mu.Unlock()
+	var reply RequestVoteReply
 
 	//TODO H ILOPOIHSH AUTH EINAI SIRIAKH, NOMIZW PREPEI NA STELNEIS SE THREASD TA REQUEST VOTE KAI NA PAREIS META TA SVSTA
 	for i, _ := range rf.peers {
