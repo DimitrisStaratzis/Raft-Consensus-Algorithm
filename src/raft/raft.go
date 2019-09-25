@@ -18,6 +18,7 @@ package raft
 //
 
 import (
+	"fmt"
 	//"fmt"
 	//"fmt"
 	"sync"
@@ -334,6 +335,7 @@ func (rf *Raft) sendHeartBeats() {
 }
 
 func decideLeader(rf *Raft) {
+	fmt.Print("ELECTION STARTS")
 	votesNeeded := (len(rf.peers)) % 2 //votes needed except the one rf gives to itself
 	var votesReceived int
 	lastLogIndex := len(rf.Log) - 1
@@ -355,6 +357,7 @@ func decideLeader(rf *Raft) {
 	rf.mu.Unlock()
 	//TODO H ILOPOIHSH AUTH EINAI SIRIAKH, NOMIZW PREPEI NA STELNEIS SE THREASD TA REQUEST VOTE KAI NA PAREIS META TA SVSTA
 	for i, _ := range rf.peers {
+		fmt.Print("PEER SENT")
 		voteStatus := rf.sendRequestVote(i, &args, &reply) //TODO TSEKARE AN EINAI THREAD H AN THA EPISTREPSEI AMESWS
 		if voteStatus == false {
 			//fmt.Println("voting failed") //todo WRITE MORE INFO
@@ -362,6 +365,7 @@ func decideLeader(rf *Raft) {
 		}
 		if reply.VoteGranted {
 			votesReceived++
+			fmt.Print("VOTE ++")
 		}
 
 		if votesReceived >= votesNeeded {
