@@ -275,20 +275,21 @@ func (rf *Raft) startServer() {
 	//wait for heartbeats
 
 	var randomElectionSeed int64
-	randomElectionSeed = 10
+	randomElectionSeed = 50
 	for {
 		//if not leader
 		if rf.state == 0 || rf.state == 1 {
 			rf.mu.Lock()
 			timeSinceLastHeartbeat := time.Now().UnixNano() - rf.previousHeartBeatTime
 			//fmt.Println(string(timeSinceLastHeartbeat) + " :time")
-			if timeSinceLastHeartbeat > (rf.electionTimeThreshold + randomElectionSeed*int64(rf.me)) {
-				rf.state = 1
+			if (timeSinceLastHeartbeat > (rf.electionTimeThreshold + randomElectionSeed*int64(rf.me))) && ((time.Now().UnixNano() - rf.lastElectionStarted) > 50) {//todo variables
+
 				fmt.Println("LEADER DISCONNECTED")
+				startElection(rf)
 				//rf.resetPeerVotes()
 				//fmt.Println("TIME OUT")
-				if time.Now().UnixNano()-rf.lastElectionStarted > 100 {
-					startElection(rf) //thelei GO?
+				//if time.Now().UnixNano()-rf.lastElectionStarted > 100 {
+					 //thelei GO?
 				}
 
 			} else {
@@ -304,11 +305,12 @@ func (rf *Raft) startServer() {
 
 func startElection(rf *Raft) {
 	fmt.Println("ELECTION STARTS")
-	//rf.mu.Lock()
+	rf.mu.Lock()
+	rf.state = 1
 	rf.votesFor = rf.me //vote myself
 	rf.lastElectionStarted = time.Now().UnixNano()
 	rf.currentTerm += 1 //increase current term
-	//rf.mu.Unlock()
+	rf.mu.Unlock()
 
 	fmt.Println("passed first locks ")
 
@@ -334,7 +336,7 @@ func startElection(rf *Raft) {
 
 	//TODO H ILOPOIHSH AUTH EINAI SIRIAKH, NOMIZW PREPEI NA STELNEIS SE THREASD TA REQUEST VOTE KAI NA PAREIS META TA SVSTA
 	for i, _ := range rf.peers {
-		fmt.Println("send to peer ")
+		fmt.Println("send to peer")
 		voteStatus := rf.sendRequestVote(i, &args, &reply) //TODO TSEKARE AN EINAI THREAD H AN THA EPISTREPSEI AMESWS
 		if voteStatus == false {
 			//fmt.Println("voting failed") //todo WRITE MORE INFO
