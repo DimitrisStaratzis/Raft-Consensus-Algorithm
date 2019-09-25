@@ -166,6 +166,7 @@ func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
 		rf.lastTermToVote = args.Term
 		rf.votesFor = -1
 		rf.mu.Unlock()
+		fmt.Print("DEADLOCK NO")
 		if (rf.currentTerm <= args.Term) && len(rf.Log)-1 <= args.LastLogIndex {
 			reply.VoteGranted = true
 			rf.mu.Lock()
