@@ -286,6 +286,10 @@ func (rf *Raft) startServer() {
 				fmt.Println("LEADER DISCONNECTED")
 				//rf.resetPeerVotes()
 				//fmt.Println("TIME OUT")
+				rf.mu.Lock()
+				rf.votesFor = rf.me //vote myself
+				rf.currentTerm += 1 //increase current term
+				rf.mu.Unlock()
 				startElection(rf) //thelei GO?
 			} else {
 				rf.previousHeartBeatTime = time.Now().UnixNano()
@@ -300,10 +304,6 @@ func (rf *Raft) startServer() {
 
 func startElection(rf *Raft) {
 	fmt.Println("ELECTION STARTS")
-	rf.mu.Lock()
-	rf.votesFor = rf.me //vote myself
-	rf.currentTerm += 1 //increase current term
-	rf.mu.Unlock()
 
 	fmt.Println("passed first locks ")
 
