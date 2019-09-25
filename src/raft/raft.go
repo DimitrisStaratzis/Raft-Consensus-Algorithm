@@ -170,13 +170,14 @@ func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
 	reply.Term = rf.currentTerm
 	//rf.currentTerm = args.Term
 	if rf.votesFor == -1 { // if server has not voted yet
-		rf.mu.Lock()
+		//rf.mu.Lock()
 		rf.lastTermToVote = args.Term
-		rf.mu.Unlock()
+		//rf.mu.Unlock()
 		if (rf.currentTerm <= args.Term) && len(rf.Log)-1 <= args.LastLogIndex {
 			reply.VoteGranted = true
-			//rf.mu.Lock()
+			rf.mu.Lock()
 			rf.votesFor = args.CandidateID
+			rf.mu.Unlock()
 			//rf.state = 0 //TODO CHECK IF BECOMES FOLLOWER AGAIN
 			//rf.mu.Unlock()
 		} else {
