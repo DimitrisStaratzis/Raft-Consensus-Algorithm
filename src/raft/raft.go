@@ -265,7 +265,7 @@ func (rf *Raft) startServer() {
 			//fmt.Println(string(timeSinceLastHeartbeat) + " :time")
 			if timeSinceLastHeartbeat > (rf.electionTimeThreshold + randomElectionSeed*int64(rf.me)) {
 				rf.state = 1
-				fmt.Println("MPHKA")
+				//fmt.Println("MPHKA")
 				rf.currentTerm++
 				//fmt.Println("TIME OUT")
 				rf.startElection() //thelei GO?
@@ -282,10 +282,10 @@ func (rf *Raft) startServer() {
 
 func (rf *Raft) startElection() {
 
-	fmt.Println("Election starts1")
+	//fmt.Println("Election starts1")
 	//now send requests to all other peers to vote for rf by using the sendRequest
 
-	fmt.Println("Election starts2")
+	//fmt.Println("Election starts2")
 
 	go decideLeader(rf)
 
@@ -303,7 +303,7 @@ func (rf *Raft) sendHeartBeats() {
 	for i, _ := range rf.peers {
 		heartbeatStatus := rf.sendAppendEntries(i, &args, &reply)
 		if heartbeatStatus == false {
-			fmt.Println("Heartbeat failed")
+			//fmt.Println("Heartbeat failed")
 		}
 	}
 
@@ -333,7 +333,7 @@ func decideLeader(rf *Raft) {
 	for i, _ := range rf.peers {
 		voteStatus := rf.sendRequestVote(i, &args, &reply) //TODO TSEKARE AN EINAI THREAD H AN THA EPISTREPSEI AMESWS
 		if voteStatus == false {
-			fmt.Println("voting failed") //todo WRITE MORE INFO
+			//fmt.Println("voting failed") //todo WRITE MORE INFO
 
 		}
 		if reply.VoteGranted {
@@ -343,7 +343,7 @@ func decideLeader(rf *Raft) {
 		if votesReceived >= votesNeeded {
 			rf.mu.Lock()
 			rf.state = 2
-			fmt.Println("WE HAVE LEADER")
+			//fmt.Println("WE HAVE LEADER")
 			rf.leaderID = rf.me
 			//TODO CHECK IF LEADER IS ONLY ONE.
 			rf.mu.Unlock()
