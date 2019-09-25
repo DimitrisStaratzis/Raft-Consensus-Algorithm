@@ -160,30 +160,29 @@ type AppendEntriesReply struct {
 //
 func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
 	// Your code here (2A, 2B).
-	if rf.lastTermToVote < args.Term {
-		rf.votesFor = -1
-	}
 	reply.Term = rf.currentTerm
-	if rf.votesFor == -1 { // if server has not voted yet
+	if rf.lastTermToVote < args.Term { // if server has not voted yet
+		rf.mu.Lock()
 		rf.lastTermToVote = args.Term
-
+		rf.votesFor = -1
+		rf.mu.Unlock()
 		if (rf.currentTerm <= args.Term) && len(rf.Log)-1 <= args.LastLogIndex {
 			reply.VoteGranted = true
-			//rf.mu.Lock()
+			rf.mu.Lock()
 			rf.votesFor = args.CandidateID
 			//rf.state = 0 //TODO CHECK IF BECOMES FOLLOWER AGAIN
-			//rf.mu.Unlock()
+			rf.mu.Unlock()
 		} else {
 			reply.VoteGranted = false
 		}
-	} /*else if rf.lastTermToVote == args.Term {
+	} else if rf.lastTermToVote == args.Term {
 		if rf.votesFor == args.CandidateID { // if i have prev voted vote again
 			reply.VoteGranted = true
 		} else {
 			//i have voted another server
 		}
 
-	}*/
+	}
 }
 
 func (rf *Raft) AppendEntries(args *AppendEntriesArgs, reply *AppendEntriesReply) {
