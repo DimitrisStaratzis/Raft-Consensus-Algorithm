@@ -164,9 +164,11 @@ func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
 	/*defer rf.mu.Unlock()*/
 	if rf.lastTermToVote < args.Term {
 		rf.votesFor = -1
+	} else {
+		rf.votesFor = -2
 	}
 	reply.Term = rf.currentTerm
-	rf.currentTerm = args.Term
+	//rf.currentTerm = args.Term
 	if rf.votesFor == -1 { // if server has not voted yet
 		rf.lastTermToVote = args.Term
 
