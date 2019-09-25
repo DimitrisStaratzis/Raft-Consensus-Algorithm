@@ -18,7 +18,7 @@ package raft
 //
 
 import (
-	"fmt"
+	//"fmt"
 	//"fmt"
 	"sync"
 	"time"
@@ -359,7 +359,7 @@ func decideLeader(rf *Raft) {
 		if votesReceived >= votesNeeded {
 			rf.mu.Lock()
 			rf.state = 2
-			fmt.Println("WE HAVE LEADER")
+			//fmt.Println("WE HAVE LEADER")
 			rf.leaderID = rf.me
 			//TODO CHECK IF LEADER IS ONLY ONE.
 			rf.mu.Unlock()
