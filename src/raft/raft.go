@@ -320,9 +320,10 @@ func decideLeader(rf *Raft) {
 	if lastLogIndex == -1 {
 		args.LastLogIndex = 0
 		args.LastLogTerm = 0
+	} else {
+		args.LastLogIndex = lastLogIndex
+		args.LastLogTerm = rf.Log[lastLogIndex].Term
 	}
-	args.LastLogIndex = lastLogIndex
-	args.LastLogTerm = rf.Log[lastLogIndex].Term
 
 	var reply RequestVoteReply
 	rf.mu.Lock()
