@@ -350,6 +350,7 @@ func decideLeader(rf *Raft) {
 	}
 
 	var reply RequestVoteReply
+	rf.votesFor = rf.me
 	/*rf.mu.Lock()
 	rf.votesFor = rf.me //vote myself
 	rf.mu.Unlock()*/
