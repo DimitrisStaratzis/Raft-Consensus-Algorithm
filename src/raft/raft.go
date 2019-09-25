@@ -304,12 +304,12 @@ func (rf *Raft) startServer() {
 
 func startElection(rf *Raft) {
 	fmt.Println("ELECTION STARTS")
-	rf.mu.Lock()
+	//rf.mu.Lock()
 	rf.state = 1
 	rf.votesFor = rf.me //vote myself
 	rf.lastElectionStarted = time.Now().UnixNano()
 	rf.currentTerm += 1 //increase current term
-	rf.mu.Unlock()
+	//rf.mu.Unlock()
 
 	fmt.Println("passed first locks ")
 
