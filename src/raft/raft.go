@@ -169,7 +169,7 @@ func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
 	if rf.lastTermToVote < args.Term { // if server has not voted yet
 		fmt.Println("psifizw ", rf.lastTermToVote, args.Term)
 		rf.lastTermToVote = args.Term
-		fmt.Println("mphka", rf.lastTermToVote)
+		//fmt.Println("mphka", rf.lastTermToVote)
 		if (rf.currentTerm <= args.Term) && len(rf.Log)-1 <= args.LastLogIndex {
 			reply.VoteGranted = true
 			rf.votesFor = args.CandidateID
@@ -352,6 +352,8 @@ func (rf *Raft) sendHeartBeats() {
 
 func decideLeader(rf *Raft) {
 	//fmt.Println("ELECTION STARTS")
+	rf.mu.Lock()
+	defer rf.mu.Unlock()
 	votesNeeded := (len(rf.peers)) % 2 //votes needed except the one rf gives to itself
 	var votesReceived int
 	lastLogIndex := len(rf.Log) - 1
