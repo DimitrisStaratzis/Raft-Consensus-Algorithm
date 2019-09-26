@@ -377,11 +377,11 @@ func startElection(rf *Raft) {
 		rf.leaderID = rf.me
 		//TODO CHECK IF LEADER IS ONLY ONE.
 		//rf.mu.Unlock()
-	} /* else {
+	} else {
 		//become a follower again
 		rf.state = 0
 		//fmt.Println("I was not elected: ", rf.me)
-	}*/
+	}
 	rf.mu.Unlock()
 }
 
