@@ -375,11 +375,11 @@ func decideLeader(rf *Raft) {
 		args.LastLogTerm = rf.Log[lastLogIndex].Term
 	}
 
-	var reply RequestVoteReply
 	//rf.votesFor = rf.me
 
 	//TODO H ILOPOIHSH AUTH EINAI SIRIAKH, NOMIZW PREPEI NA STELNEIS SE THREASD TA REQUEST VOTE KAI NA PAREIS META TA SVSTA
 	for i, _ := range rf.peers {
+		var reply RequestVoteReply
 		//fmt.Println("PEER SENT")
 		voteStatus := rf.sendRequestVote(i, &args, &reply) //TODO TSEKARE AN EINAI THREAD H AN THA EPISTREPSEI AMESWS
 		if voteStatus == false {
