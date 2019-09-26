@@ -170,7 +170,7 @@ func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
 		fmt.Println("Egw o: ", rf.me, " Prin psifisa sto: ", rf.lastTermToVote, " Twra psifizw sto: ", args.Term)
 		rf.lastTermToVote = args.Term
 		//fmt.Println("mphka", rf.lastTermToVote)
-		if (rf.currentTerm <= args.Term) && len(rf.Log)-1 <= args.LastLogIndex {
+		if ((rf.currentTerm <= args.Term) && len(rf.Log)-1 <= args.LastLogIndex) || args.CandidateID == rf.me {
 			reply.VoteGranted = true
 			rf.votesFor = args.CandidateID
 			fmt.Println("Psifizw ton ", args.CandidateID)
