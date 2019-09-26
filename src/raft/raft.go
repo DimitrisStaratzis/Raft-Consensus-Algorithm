@@ -182,7 +182,10 @@ func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
 
 		} else {
 			reply.VoteGranted = false
+
 		}
+	} else {
+		reply.VoteGranted = false
 	}
 	rf.mu.Unlock()
 }
@@ -356,7 +359,7 @@ func startElection(rf *Raft) {
 			//fmt.Println("voting failed") //todo WRITE MORE INFO
 
 		}
-		if reply.VoteGranted {
+		if reply.VoteGranted && reply.Term == rf.currentTerm {
 			votesReceived++
 			//fmt.Println("VOTE ++")
 			//fmt.Print(votesReceived)
