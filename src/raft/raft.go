@@ -167,12 +167,13 @@ func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
 	//rf.mu.Lock()
 	//rf.mu.Unlock()
 	if rf.lastTermToVote < args.Term { // if server has not voted yet
-		fmt.Println("psifizw ", rf.lastTermToVote, args.Term)
+
 		rf.lastTermToVote = args.Term
 		//fmt.Println("mphka", rf.lastTermToVote)
 		if (rf.currentTerm <= args.Term) && len(rf.Log)-1 <= args.LastLogIndex {
 			reply.VoteGranted = true
 			rf.votesFor = args.CandidateID
+			fmt.Println("Psifizw ton ", args.CandidateID, "me: ", rf.lastTermToVote, args.Term)
 
 		} else {
 			reply.VoteGranted = false
@@ -360,7 +361,7 @@ func decideLeader(rf *Raft) {
 	rf.mu.Unlock()
 
 	votesNeeded := (len(rf.peers)) % 2 //votes needed except the one rf gives to itself
-	var votesReceived int
+	votesReceived := 0
 	lastLogIndex := len(rf.Log) - 1
 	var args = RequestVoteArgs{}
 
@@ -397,7 +398,7 @@ func decideLeader(rf *Raft) {
 	if votesReceived >= votesNeeded {
 		//rf.mu.Lock()
 		rf.state = 2
-		fmt.Println(rf.currentTerm, votesReceived, votesNeeded, " WE HAVE LEADER")
+		fmt.Println(rf.currentTerm, votesReceived, votesNeeded, " WE HAVE LEADER: ", rf.me)
 		rf.leaderID = rf.me
 		//TODO CHECK IF LEADER IS ONLY ONE.
 		//rf.mu.Unlock()
