@@ -352,8 +352,8 @@ func (rf *Raft) sendHeartBeats() {
 
 func decideLeader(rf *Raft) {
 	//fmt.Println("ELECTION STARTS")
-	rf.mu.Lock()
-	defer rf.mu.Unlock()
+	//rf.mu.Lock()
+	//defer rf.mu.Unlock()
 	votesNeeded := (len(rf.peers)) % 2 //votes needed except the one rf gives to itself
 	var votesReceived int
 	lastLogIndex := len(rf.Log) - 1
@@ -370,10 +370,10 @@ func decideLeader(rf *Raft) {
 	}
 
 	var reply RequestVoteReply
-	rf.votesFor = rf.me
-	/*rf.mu.Lock()
+	//rf.votesFor = rf.me
+	rf.mu.Lock()
 	rf.votesFor = rf.me //vote myself
-	rf.mu.Unlock()*/
+	rf.mu.Unlock()
 	//TODO H ILOPOIHSH AUTH EINAI SIRIAKH, NOMIZW PREPEI NA STELNEIS SE THREASD TA REQUEST VOTE KAI NA PAREIS META TA SVSTA
 	for i, _ := range rf.peers {
 		//fmt.Println("PEER SENT")
