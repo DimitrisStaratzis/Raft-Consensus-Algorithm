@@ -304,7 +304,7 @@ func (rf *Raft) startServer() {
 			if (time.Now().UnixNano() - rf.electionStarted) > 500 {
 				rf.mu.Lock()
 				rf.electionStarted = time.Now().UnixNano()
-				rf.currentTerm--
+				rf.currentTerm++
 				rf.mu.Unlock()
 				startElection(rf)
 
@@ -323,7 +323,7 @@ func startElection(rf *Raft) {
 	//defer rf.mu.Unlock()
 	rf.mu.Lock()
 	rf.votesFor = rf.me //vote myself
-	rf.currentTerm++
+	//rf.currentTerm++
 	rf.mu.Unlock()
 
 	votesNeeded := (len(rf.peers)) / 2 //votes needed except the one rf gives to itself
