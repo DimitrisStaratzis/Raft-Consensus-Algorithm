@@ -284,7 +284,7 @@ func (rf *Raft) startServer() {
 	var randomElectionSeed int64
 	randomElectionSeed = 30
 	for {
-		//if not leader
+		//if follower
 		if rf.state == 0 {
 
 			timeSinceLastHeartbeat := time.Now().UnixNano() - rf.previousHeartBeatTime
@@ -309,7 +309,7 @@ func (rf *Raft) startServer() {
 
 			}
 
-		} else {
+		} else { // if leader
 			rf.sendHeartBeats()
 		}
 
@@ -389,16 +389,18 @@ func decideLeader(rf *Raft) {
 			fmt.Print(votesNeeded)
 		}
 
-		if votesReceived == votesNeeded {
-			//rf.mu.Lock()
-			rf.state = 2
-			fmt.Println("WE HAVE LEADER")
-			rf.leaderID = rf.me
-			//TODO CHECK IF LEADER IS ONLY ONE.
-			//rf.mu.Unlock()
-		}
 	}
-
+	if votesReceived >= votesNeeded {
+		//rf.mu.Lock()
+		rf.state = 2
+		fmt.Println("WE HAVE LEADER")
+		rf.leaderID = rf.me
+		//TODO CHECK IF LEADER IS ONLY ONE.
+		//rf.mu.Unlock()
+	} else {
+		//become a follower again
+		rf.state = 0
+	}
 }
 
 //
