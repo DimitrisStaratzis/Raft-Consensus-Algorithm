@@ -174,7 +174,7 @@ func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
 		//fmt.Println("mphka", rf.lastTermToVote)
 		if ((rf.currentTerm <= args.Term) && len(rf.Log)-1 <= args.LastLogIndex) || args.CandidateID == rf.me {
 			reply.VoteGranted = true
-			//rf.currentTerm = args.Term
+			rf.currentTerm = args.Term
 			rf.votesFor = args.CandidateID
 			reply.Term = rf.currentTerm
 			if args.CandidateID != rf.me { //if i did not vote for myself, step down to follower state
@@ -201,7 +201,7 @@ func (rf *Raft) AppendEntries(args *AppendEntriesArgs, reply *AppendEntriesReply
 	} else {
 		reply.Success = true
 		rf.mu.Lock()
-		//rf.currentTerm = args.Term
+		rf.currentTerm = args.Term
 		rf.previousHeartBeatTime = time.Now().UnixNano()
 		rf.mu.Unlock()
 	}
@@ -310,6 +310,10 @@ func (rf *Raft) startServer() {
 				rf.mu.Unlock()
 				fmt.Println("HMOUN CANDIDATE KAI MOU IRTHE LEADER")
 			} else if (time.Now().UnixNano() - rf.electionStarted) > 350 {
+				rf.mu.Lock()
+				rf.electionStarted = time.Now().UnixNano()
+				rf.currentTerm++
+				rf.mu.Unlock()
 				startElection(rf)
 
 			}
@@ -328,8 +332,6 @@ func startElection(rf *Raft) {
 	rf.mu.Lock()
 	rf.votesFor = rf.me //vote myself
 	//rf.currentTerm++
-	rf.electionStarted = time.Now().UnixNano()
-	rf.currentTerm++
 	rf.mu.Unlock()
 
 	votesNeeded := rf.numberOfPeers / 2 //votes needed except the one rf gives to itself
