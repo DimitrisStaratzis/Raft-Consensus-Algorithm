@@ -83,12 +83,13 @@ func (rf *Raft) GetState() (int, bool) {
 	// Your code here (2A).
 	rf.mu.Lock()
 	term = rf.currentTerm
-	if rf.state == -2 {
+	if rf.state == 2 {
 		isleader = true
 	} else {
 		isleader = false
 	}
 	rf.mu.Unlock()
+
 	return term, isleader
 }
 
