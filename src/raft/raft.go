@@ -388,8 +388,8 @@ func decideLeader(rf *Raft) {
 		if reply.VoteGranted {
 			votesReceived++
 			//fmt.Println("VOTE ++")
-			fmt.Print(votesReceived)
-			fmt.Print(votesNeeded)
+			//fmt.Print(votesReceived)
+			//fmt.Print(votesNeeded)
 		}
 
 	}
@@ -397,7 +397,7 @@ func decideLeader(rf *Raft) {
 	if votesReceived >= votesNeeded {
 		//rf.mu.Lock()
 		rf.state = 2
-		fmt.Println("WE HAVE LEADER")
+		fmt.Println(rf.currentTerm, votesReceived, votesNeeded, " WE HAVE LEADER")
 		rf.leaderID = rf.me
 		//TODO CHECK IF LEADER IS ONLY ONE.
 		//rf.mu.Unlock()
