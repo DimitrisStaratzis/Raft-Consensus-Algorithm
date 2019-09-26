@@ -171,7 +171,7 @@ func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
 		rf.lastTermToVote = args.Term
 		//fmt.Println("mphka", rf.lastTermToVote)
 		if ((rf.currentTerm <= args.Term) && len(rf.Log)-1 <= args.LastLogIndex) || args.CandidateID == rf.me {
-			reply.VoteGranted = true
+			//reply.VoteGranted = true
 			rf.votesFor = args.CandidateID
 			fmt.Println("Psifizw ton ", args.CandidateID)
 
@@ -293,7 +293,7 @@ func (rf *Raft) startServer() {
 			if timeSinceLastHeartbeat > (rf.electionTimeThreshold + randomElectionSeed*int64(rf.me)) {
 				rf.mu.Lock()
 				rf.state = 1
-				//fmt.Println("MPHKA")
+				fmt.Println("KANW EKLOGES")
 				rf.mu.Unlock()
 				//rf.resetPeerVotes()
 				//fmt.Println("TIME OUT")
@@ -306,7 +306,7 @@ func (rf *Raft) startServer() {
 				rf.electionStarted = time.Now().UnixNano()
 				rf.currentTerm--
 				rf.mu.Unlock()
-				go startElection(rf)
+				startElection(rf)
 
 			}
 
