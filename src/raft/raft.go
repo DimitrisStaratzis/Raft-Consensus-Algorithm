@@ -161,7 +161,7 @@ type AppendEntriesReply struct {
 func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
 	// Your code here (2A, 2B).
 	rf.mu.Lock()
-	defer rf.mu.Unlock()
+
 	//reply.Term = rf.currentTerm
 	//rf.mu.Lock()
 	//rf.mu.Lock()
@@ -178,6 +178,7 @@ func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
 			reply.VoteGranted = false
 		}
 	}
+	rf.mu.Unlock()
 	//rf.mu.Unlock()
 
 	/*else if rf.lastTermToVote == args.Term {
