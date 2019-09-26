@@ -72,6 +72,7 @@ type Raft struct {
 	lastApplied           int
 	lastTermToVote        int
 	electionStarted       int64
+	numberOfPeers         int
 }
 
 // return currentTerm and whether this server
@@ -333,7 +334,7 @@ func startElection(rf *Raft) {
 	//rf.currentTerm++
 	rf.mu.Unlock()
 
-	votesNeeded := (len(rf.peers)) / 2 //votes needed except the one rf gives to itself
+	votesNeeded := rf.numberOfPeers / 2 //votes needed except the one rf gives to itself
 	votesReceived := 0
 	lastLogIndex := len(rf.Log) - 1
 	var args = RequestVoteArgs{}
@@ -436,6 +437,7 @@ func Make(peers []*labrpc.ClientEnd, me int,
 	rf.leaderID = -1
 	rf.lastTermToVote = -1
 	rf.electionStarted = -1
+	rf.numberOfPeers = len(peers)
 
 	/*for i, peer := range peers{
 		fmt.Println(p)
