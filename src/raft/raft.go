@@ -173,6 +173,9 @@ func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
 		if ((rf.currentTerm <= args.Term) && len(rf.Log)-1 <= args.LastLogIndex) || args.CandidateID == rf.me {
 			reply.VoteGranted = true
 			rf.votesFor = args.CandidateID
+			if args.CandidateID != rf.me { //if i did not vote for myself, step down to follower state
+				rf.state = 0
+			}
 			fmt.Println("Psifizw ton ", args.CandidateID)
 
 		} else {
