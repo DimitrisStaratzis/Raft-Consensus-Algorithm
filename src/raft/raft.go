@@ -295,7 +295,7 @@ func (rf *Raft) startServer() {
 		} else if rf.state == 1 {
 			timeSinceLastHeartbeatCandidate := time.Now().UnixNano() - rf.previousHeartBeatTime
 			//if received heartbeat as a canidate, become a follower again
-			if timeSinceLastHeartbeatCandidate < (rf.electionTimeThreshold + randomElectionSeed) {
+			if timeSinceLastHeartbeatCandidate < rf.electionTimeThreshold {
 				rf.mu.Lock()
 				rf.state = 0
 				rf.mu.Unlock()
@@ -393,6 +393,7 @@ func (rf *Raft) sendHeartBeats() {
 		if reply.Success == false {
 			rf.mu.Lock()
 			rf.state = 0
+			rf.leaderID = -1
 			rf.mu.Unlock()
 		}
 	}
@@ -424,6 +425,7 @@ func Make(peers []*labrpc.ClientEnd, me int,
 	rf.votesFor = -1
 	rf.commitIndex = 0
 	rf.lastApplied = 0
+	rf.leaderID = -1
 	rf.lastTermToVote = -1
 	rf.electionStarted = -1
 
