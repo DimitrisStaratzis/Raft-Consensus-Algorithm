@@ -310,10 +310,6 @@ func (rf *Raft) startServer() {
 				rf.mu.Unlock()
 				fmt.Println("HMOUN CANDIDATE KAI MOU IRTHE LEADER")
 			} else if (time.Now().UnixNano() - rf.electionStarted) > 350 {
-				rf.mu.Lock()
-				rf.electionStarted = time.Now().UnixNano()
-				rf.currentTerm++
-				rf.mu.Unlock()
 				startElection(rf)
 
 			}
@@ -332,6 +328,8 @@ func startElection(rf *Raft) {
 	rf.mu.Lock()
 	rf.votesFor = rf.me //vote myself
 	//rf.currentTerm++
+	rf.electionStarted = time.Now().UnixNano()
+	rf.currentTerm++
 	rf.mu.Unlock()
 
 	votesNeeded := rf.numberOfPeers / 2 //votes needed except the one rf gives to itself
