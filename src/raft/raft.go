@@ -301,7 +301,7 @@ func (rf *Raft) startServer() {
 			}
 
 		} else if rf.state == 1 {
-			if (time.Now().UnixNano() - rf.electionStarted) > 50 {
+			if (time.Now().UnixNano() - rf.electionStarted) > 500 {
 				rf.mu.Lock()
 				rf.electionStarted = time.Now().UnixNano()
 				rf.mu.Unlock()
