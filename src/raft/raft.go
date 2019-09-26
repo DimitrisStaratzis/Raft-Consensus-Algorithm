@@ -160,16 +160,19 @@ type AppendEntriesReply struct {
 //
 func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
 	// Your code here (2A, 2B).
+	rf.mu.Lock()
+	defer rf.mu.Unlock()
 	if rf.lastTermToVote < args.Term {
+
 		rf.votesFor = -1
 	} else {
 		rf.votesFor = -2
 	}
 	//reply.Term = rf.currentTerm
 	//rf.mu.Lock()
-	rf.mu.Lock()
+	//rf.mu.Lock()
 	voteFor := rf.votesFor
-	rf.mu.Unlock()
+	//rf.mu.Unlock()
 	if voteFor == -1 { // if server has not voted yet
 		rf.lastTermToVote = args.Term
 		fmt.Println("mphka")
