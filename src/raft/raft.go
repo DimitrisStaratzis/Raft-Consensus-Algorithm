@@ -308,7 +308,7 @@ func (rf *Raft) startServer() {
 				rf.mu.Lock()
 				rf.state = 0
 				rf.mu.Unlock()
-				fmt.Println("HMOUN CANDIDATE KAI MOU IRTHE  .LEADER")
+				fmt.Println("HMOUN CANDIDATE KAI MOU IRTHE LEADER")
 			} else if (time.Now().UnixNano() - rf.electionStarted) > 350 {
 				rf.mu.Lock()
 				rf.electionStarted = time.Now().UnixNano()
@@ -377,11 +377,11 @@ func startElection(rf *Raft) {
 		rf.leaderID = rf.me
 		//TODO CHECK IF LEADER IS ONLY ONE.
 		//rf.mu.Unlock()
-	} else {
+	} /* else {
 		//become a follower again
 		rf.state = 0
 		//fmt.Println("I was not elected: ", rf.me)
-	}
+	}*/
 	rf.mu.Unlock()
 }
 
