@@ -293,7 +293,6 @@ func (rf *Raft) startServer() {
 				rf.mu.Lock()
 				rf.state = 1
 				//fmt.Println("MPHKA")
-				rf.currentTerm++
 				rf.mu.Unlock()
 				//rf.resetPeerVotes()
 				//fmt.Println("TIME OUT")
@@ -304,6 +303,7 @@ func (rf *Raft) startServer() {
 			if (time.Now().UnixNano() - rf.electionStarted) > 500 {
 				rf.mu.Lock()
 				rf.electionStarted = time.Now().UnixNano()
+				rf.currentTerm--
 				rf.mu.Unlock()
 				rf.startElection()
 
@@ -354,6 +354,11 @@ func decideLeader(rf *Raft) {
 	//fmt.Println("ELECTION STARTS")
 	//rf.mu.Lock()
 	//defer rf.mu.Unlock()
+	rf.mu.Lock()
+	rf.votesFor = rf.me //vote myself
+	rf.currentTerm++
+	rf.mu.Unlock()
+
 	votesNeeded := (len(rf.peers)) % 2 //votes needed except the one rf gives to itself
 	var votesReceived int
 	lastLogIndex := len(rf.Log) - 1
@@ -371,9 +376,7 @@ func decideLeader(rf *Raft) {
 
 	var reply RequestVoteReply
 	//rf.votesFor = rf.me
-	rf.mu.Lock()
-	rf.votesFor = rf.me //vote myself
-	rf.mu.Unlock()
+
 	//TODO H ILOPOIHSH AUTH EINAI SIRIAKH, NOMIZW PREPEI NA STELNEIS SE THREASD TA REQUEST VOTE KAI NA PAREIS META TA SVSTA
 	for i, _ := range rf.peers {
 		//fmt.Println("PEER SENT")
