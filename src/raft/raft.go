@@ -284,11 +284,11 @@ func (rf *Raft) startServer() {
 	randomElectionSeed = 30
 	for {
 		//if not leader
-		if rf.state == 0 || rf.state == 1 {
+		if rf.state == 0 {
 
 			timeSinceLastHeartbeat := time.Now().UnixNano() - rf.previousHeartBeatTime
 			//fmt.Println(string(timeSinceLastHeartbeat) + " :time")
-			if timeSinceLastHeartbeat > (rf.electionTimeThreshold+randomElectionSeed*int64(rf.me)) && ((time.Now().UnixNano() - rf.electionStarted) > 50) {
+			if timeSinceLastHeartbeat > (rf.electionTimeThreshold + randomElectionSeed*int64(rf.me)) {
 				rf.mu.Lock()
 				rf.state = 1
 				//fmt.Println("MPHKA")
@@ -296,7 +296,15 @@ func (rf *Raft) startServer() {
 				rf.mu.Unlock()
 				//rf.resetPeerVotes()
 				//fmt.Println("TIME OUT")
-				rf.startElection() //thelei GO?
+				//rf.startElection() //thelei GO?
+			}
+
+		} else if rf.state == 1 {
+			if (time.Now().UnixNano() - rf.electionStarted) > 50 {
+				rf.mu.Lock()
+				rf.electionStarted = time.Now().UnixNano()
+				rf.mu.Unlock()
+				rf.startElection()
 
 			}
 
