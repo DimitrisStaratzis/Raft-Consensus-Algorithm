@@ -162,19 +162,13 @@ func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
 	// Your code here (2A, 2B).
 	rf.mu.Lock()
 	defer rf.mu.Unlock()
-	var hasToVote bool
-	if rf.lastTermToVote < args.Term {
-		hasToVote = true
-	} else {
-		hasToVote = false
-	}
 	//reply.Term = rf.currentTerm
 	//rf.mu.Lock()
 	//rf.mu.Lock()
 	//rf.mu.Unlock()
-	if hasToVote { // if server has not voted yet
+	if rf.lastTermToVote < args.Term { // if server has not voted yet
 		rf.lastTermToVote = args.Term
-		fmt.Println("mphka")
+		fmt.Println("mphka", rf.lastTermToVote)
 		if (rf.currentTerm <= args.Term) && len(rf.Log)-1 <= args.LastLogIndex {
 			reply.VoteGranted = true
 			rf.votesFor = args.CandidateID
