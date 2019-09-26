@@ -293,13 +293,13 @@ func (rf *Raft) startServer() {
 			}
 
 		} else if rf.state == 1 {
-
 			timeSinceLastHeartbeatCandidate := time.Now().UnixNano() - rf.previousHeartBeatTime
 			//if received heartbeat as a canidate, become a follower again
 			if timeSinceLastHeartbeatCandidate < (rf.electionTimeThreshold + randomElectionSeed) {
 				rf.mu.Lock()
 				rf.state = 0
 				rf.mu.Unlock()
+				fmt.Println("HMOUN CANDIDATE KAI MOU IRTHE LEADER")
 			} else if (time.Now().UnixNano() - rf.electionStarted) > 500 {
 				rf.mu.Lock()
 				rf.electionStarted = time.Now().UnixNano()
