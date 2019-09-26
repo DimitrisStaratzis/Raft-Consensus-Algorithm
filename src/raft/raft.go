@@ -326,7 +326,7 @@ func startElection(rf *Raft) {
 	rf.currentTerm++
 	rf.mu.Unlock()
 
-	votesNeeded := (len(rf.peers)) % 2 //votes needed except the one rf gives to itself
+	votesNeeded := (len(rf.peers)) / 2 //votes needed except the one rf gives to itself
 	votesReceived := 0
 	lastLogIndex := len(rf.Log) - 1
 	var args = RequestVoteArgs{}
@@ -342,7 +342,7 @@ func startElection(rf *Raft) {
 	}
 
 	//rf.votesFor = rf.me
-	fmt.Println("we have ", len(rf.peers))
+	//fmt.Println("we have ", len(rf.peers))
 	//TODO H ILOPOIHSH AUTH EINAI SIRIAKH, NOMIZW PREPEI NA STELNEIS SE THREASD TA REQUEST VOTE KAI NA PAREIS META TA SVSTA
 	for i, _ := range rf.peers {
 
@@ -362,7 +362,7 @@ func startElection(rf *Raft) {
 
 	}
 	rf.mu.Lock()
-	if votesReceived >= votesNeeded {
+	if votesReceived > votesNeeded {
 		//rf.mu.Lock()
 		rf.state = 2
 		fmt.Println(rf.currentTerm, votesReceived, votesNeeded, " WE HAVE LEADER: ", rf.me)
