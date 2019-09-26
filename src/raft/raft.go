@@ -161,11 +161,6 @@ type AppendEntriesReply struct {
 func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
 	// Your code here (2A, 2B).
 	rf.mu.Lock()
-
-	//reply.Term = rf.currentTerm
-	//rf.mu.Lock()
-	//rf.mu.Lock()
-	//rf.mu.Unlock()
 	if rf.lastTermToVote < args.Term { // if server has not voted yet
 		fmt.Println("Egw o: ", rf.me, " Prin psifisa sto: ", rf.lastTermToVote, " Twra psifizw sto: ", args.Term)
 		rf.lastTermToVote = args.Term
@@ -183,16 +178,6 @@ func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
 		}
 	}
 	rf.mu.Unlock()
-	//rf.mu.Unlock()
-
-	/*else if rf.lastTermToVote == args.Term {
-		if rf.votesFor == args.CandidateID { // if i have prev voted vote again
-			reply.VoteGranted = true
-		} else {
-			//i have voted another server
-		}
-
-	}*/
 }
 
 func (rf *Raft) AppendEntries(args *AppendEntriesArgs, reply *AppendEntriesReply) {
@@ -304,7 +289,7 @@ func (rf *Raft) startServer() {
 			}
 
 		} else if rf.state == 1 {
-			if (time.Now().UnixNano() - rf.electionStarted) > 500 {
+			if (time.Now().UnixNano() - rf.electionStarted) > 50 {
 				rf.mu.Lock()
 				rf.electionStarted = time.Now().UnixNano()
 				rf.currentTerm++
