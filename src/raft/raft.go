@@ -293,7 +293,7 @@ func (rf *Raft) startServer() {
 			if timeSinceLastHeartbeat > (rf.electionTimeThreshold + randomElectionSeed*int64(rf.me)) {
 				rf.mu.Lock()
 				rf.state = 1
-				fmt.Println("KANW EKLOGES")
+				//fmt.Println("KANW EKLOGES")
 				rf.mu.Unlock()
 				//rf.resetPeerVotes()
 				//fmt.Println("TIME OUT")
@@ -318,7 +318,7 @@ func (rf *Raft) startServer() {
 }
 
 func startElection(rf *Raft) {
-	fmt.Println("ELECTION STARTS")
+	//fmt.Println("ELECTION STARTS")
 	//rf.mu.Lock()
 	//defer rf.mu.Unlock()
 	rf.mu.Lock()
@@ -372,6 +372,7 @@ func startElection(rf *Raft) {
 	} else {
 		//become a follower again
 		rf.state = 0
+		fmt.Println("I was not elected: ", rf.me)
 	}
 	rf.mu.Unlock()
 }
