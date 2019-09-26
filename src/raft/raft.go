@@ -390,6 +390,7 @@ func decideLeader(rf *Raft) {
 		}
 
 	}
+	rf.mu.Lock()
 	if votesReceived >= votesNeeded {
 		//rf.mu.Lock()
 		rf.state = 2
@@ -401,6 +402,7 @@ func decideLeader(rf *Raft) {
 		//become a follower again
 		rf.state = 0
 	}
+	rf.mu.Unlock()
 }
 
 //
