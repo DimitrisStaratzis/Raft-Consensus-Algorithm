@@ -162,18 +162,17 @@ func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
 	// Your code here (2A, 2B).
 	rf.mu.Lock()
 	defer rf.mu.Unlock()
+	var hasToVote bool
 	if rf.lastTermToVote < args.Term {
-
-		rf.votesFor = -1
+		hasToVote = true
 	} else {
-		rf.votesFor = -2
+		hasToVote = false
 	}
 	//reply.Term = rf.currentTerm
 	//rf.mu.Lock()
 	//rf.mu.Lock()
-	voteFor := rf.votesFor
 	//rf.mu.Unlock()
-	if voteFor == -1 { // if server has not voted yet
+	if hasToVote { // if server has not voted yet
 		rf.lastTermToVote = args.Term
 		fmt.Println("mphka")
 		if (rf.currentTerm <= args.Term) && len(rf.Log)-1 <= args.LastLogIndex {
@@ -181,7 +180,6 @@ func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
 			rf.votesFor = args.CandidateID
 		} else {
 			reply.VoteGranted = false
-			rf.votesFor = -2
 		}
 	}
 	//rf.mu.Unlock()
@@ -384,7 +382,7 @@ func decideLeader(rf *Raft) {
 			fmt.Print(votesNeeded)
 		}
 
-		if votesReceived >= votesNeeded {
+		if votesReceived == votesNeeded {
 			//rf.mu.Lock()
 			rf.state = 2
 			fmt.Println("WE HAVE LEADER")
