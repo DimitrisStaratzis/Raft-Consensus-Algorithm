@@ -166,6 +166,7 @@ func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
 	//	rf.votesFor = -2
 	//}
 	//reply.Term = rf.currentTerm
+	rf.mu.Lock()
 	if rf.votesFor == -1 { // if server has not voted yet
 		//rf.lastTermToVote = args.Term
 		fmt.Println("mphka")
@@ -176,6 +177,7 @@ func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
 			reply.VoteGranted = false
 		}
 	}
+	rf.mu.Unlock()
 
 	/*else if rf.lastTermToVote == args.Term {
 		if rf.votesFor == args.CandidateID { // if i have prev voted vote again
