@@ -373,7 +373,7 @@ func startElection(rf *Raft) {
 	if votesReceived > votesNeeded {
 		//rf.mu.Lock()
 		rf.state = 2
-		fmt.Println(rf.currentTerm, votesReceived, votesNeeded, " WE HAVE LEADER: ", rf.me)
+		fmt.Println(rf.currentTerm, votesReceived, votesNeeded, "WE HAVE LEADER: ", rf.me)
 		rf.leaderID = rf.me
 		//TODO CHECK IF LEADER IS ONLY ONE.
 		//rf.mu.Unlock()
