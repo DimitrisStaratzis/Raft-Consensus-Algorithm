@@ -175,6 +175,7 @@ func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
 			reply.VoteGranted = true
 			rf.currentTerm = args.Term
 			rf.votesFor = args.CandidateID
+			reply.Term = rf.currentTerm
 			if args.CandidateID != rf.me { //if i did not vote for myself, step down to follower state
 				rf.state = 0
 			}
