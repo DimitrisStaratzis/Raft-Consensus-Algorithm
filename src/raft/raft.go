@@ -19,6 +19,8 @@ package raft
 
 import (
 	"fmt"
+	"math/rand"
+
 	//"fmt"
 	//"fmt"
 	"sync"
@@ -271,14 +273,14 @@ func (rf *Raft) startServer() {
 	//wait for heartbeats
 
 	var randomElectionSeed int64
-	randomElectionSeed = 30
+	randomElectionSeed = rand.Int63n(100)
 	for {
 		//if follower
 		if rf.state == 0 {
 
 			timeSinceLastHeartbeat := time.Now().UnixNano() - rf.previousHeartBeatTime
 			//fmt.Println(string(timeSinceLastHeartbeat) + " :time")
-			if timeSinceLastHeartbeat > (rf.electionTimeThreshold + randomElectionSeed*int64(rf.me)) {
+			if timeSinceLastHeartbeat > (rf.electionTimeThreshold + randomElectionSeed) {
 				rf.mu.Lock()
 				rf.state = 1
 				//fmt.Println("KANW EKLOGES")
@@ -289,7 +291,7 @@ func (rf *Raft) startServer() {
 			}
 
 		} else if rf.state == 1 {
-			if (time.Now().UnixNano() - rf.electionStarted) > 50 {
+			if (time.Now().UnixNano() - rf.electionStarted) > 20 {
 				rf.mu.Lock()
 				rf.electionStarted = time.Now().UnixNano()
 				rf.currentTerm++
