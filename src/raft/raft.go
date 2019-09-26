@@ -291,18 +291,20 @@ func (rf *Raft) startServer() {
 	for {
 		//if not leader
 		if rf.state == 0 || rf.state == 1 {
-			rf.mu.Lock()
+
 			timeSinceLastHeartbeat := time.Now().UnixNano() - rf.previousHeartBeatTime
 			//fmt.Println(string(timeSinceLastHeartbeat) + " :time")
 			if timeSinceLastHeartbeat > (rf.electionTimeThreshold+randomElectionSeed*int64(rf.me)) && ((time.Now().UnixNano() - rf.electionStarted) > 50) {
+				rf.mu.Lock()
 				rf.state = 1
 				//fmt.Println("MPHKA")
 				rf.currentTerm++
 				//rf.resetPeerVotes()
 				//fmt.Println("TIME OUT")
 				rf.startElection() //thelei GO?
+				rf.mu.Unlock()
 			}
-			rf.mu.Unlock()
+
 		} else {
 			rf.sendHeartBeats()
 		}
