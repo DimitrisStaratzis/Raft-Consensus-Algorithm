@@ -309,7 +309,7 @@ func (rf *Raft) startServer() {
 				rf.state = 0
 				rf.mu.Unlock()
 				fmt.Println("HMOUN CANDIDATE KAI MOU IRTHE LEADER")
-			} else if (time.Now().UnixNano() - rf.electionStarted) > 500 {
+			} else if (time.Now().UnixNano() - rf.electionStarted) > 350 {
 				rf.mu.Lock()
 				rf.electionStarted = time.Now().UnixNano()
 				rf.currentTerm++
