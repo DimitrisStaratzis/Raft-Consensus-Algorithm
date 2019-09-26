@@ -171,7 +171,7 @@ func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
 		rf.lastTermToVote = args.Term
 		//fmt.Println("mphka", rf.lastTermToVote)
 		if ((rf.currentTerm <= args.Term) && len(rf.Log)-1 <= args.LastLogIndex) || args.CandidateID == rf.me {
-			//reply.VoteGranted = true
+			reply.VoteGranted = true
 			rf.votesFor = args.CandidateID
 			fmt.Println("Psifizw ton ", args.CandidateID)
 
@@ -318,7 +318,7 @@ func (rf *Raft) startServer() {
 }
 
 func startElection(rf *Raft) {
-	//fmt.Println("ELECTION STARTS")
+	fmt.Println("ELECTION STARTS")
 	//rf.mu.Lock()
 	//defer rf.mu.Unlock()
 	rf.mu.Lock()
