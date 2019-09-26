@@ -299,10 +299,11 @@ func (rf *Raft) startServer() {
 				rf.state = 1
 				//fmt.Println("MPHKA")
 				rf.currentTerm++
+				rf.mu.Unlock()
 				//rf.resetPeerVotes()
 				//fmt.Println("TIME OUT")
 				rf.startElection() //thelei GO?
-				rf.mu.Unlock()
+
 			}
 
 		} else {
