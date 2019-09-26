@@ -167,13 +167,13 @@ func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
 	//rf.mu.Lock()
 	//rf.mu.Unlock()
 	if rf.lastTermToVote < args.Term { // if server has not voted yet
-
+		fmt.Println("Prin psifisa sto: ", rf.lastTermToVote, " Twra psifizw sto: ", args.Term)
 		rf.lastTermToVote = args.Term
 		//fmt.Println("mphka", rf.lastTermToVote)
 		if (rf.currentTerm <= args.Term) && len(rf.Log)-1 <= args.LastLogIndex {
 			reply.VoteGranted = true
 			rf.votesFor = args.CandidateID
-			fmt.Println("Psifizw ton ", args.CandidateID, "me: ", rf.lastTermToVote, args.Term)
+			fmt.Println("Psifizw ton ", args.CandidateID)
 
 		} else {
 			reply.VoteGranted = false
