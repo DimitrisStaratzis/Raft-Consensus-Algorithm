@@ -167,7 +167,10 @@ func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
 	}
 	//reply.Term = rf.currentTerm
 	//rf.mu.Lock()
-	if rf.votesFor == -1 { // if server has not voted yet
+	rf.mu.Lock()
+	voteFor := rf.votesFor
+	rf.mu.Lock()
+	if voteFor == -1 { // if server has not voted yet
 		rf.lastTermToVote = args.Term
 		fmt.Println("mphka")
 		if (rf.currentTerm <= args.Term) && len(rf.Log)-1 <= args.LastLogIndex {
