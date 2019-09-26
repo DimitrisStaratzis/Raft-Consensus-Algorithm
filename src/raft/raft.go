@@ -306,7 +306,7 @@ func (rf *Raft) startServer() {
 				rf.electionStarted = time.Now().UnixNano()
 				rf.currentTerm--
 				rf.mu.Unlock()
-				rf.startElection()
+				startElection(rf)
 
 			}
 
@@ -317,41 +317,7 @@ func (rf *Raft) startServer() {
 	}
 }
 
-func (rf *Raft) startElection() {
-
-	//fmt.Println("Election starts1")
-	//now send requests to all other peers to vote for rf by using the sendRequest
-
-	//fmt.Println("Election starts2")
-
-	decideLeader(rf)
-
-}
-
-func (rf *Raft) sendHeartBeats() {
-	args := AppendEntriesArgs{
-		Term:         rf.currentTerm,
-		LeaderId:     rf.leaderID,
-		PrevLogIndex: 0, //todo se all the entries below again
-		PrevLogTerm:  0,
-		Entries:      rf.Log,
-		LeaderCommit: 0}
-	var reply AppendEntriesReply
-	for i, _ := range rf.peers {
-		heartbeatStatus := rf.sendAppendEntries(i, &args, &reply)
-		if heartbeatStatus == false {
-			//fmt.Println("Heartbeat failed")
-		}
-		if reply.Success == false {
-			rf.mu.Lock()
-			rf.state = 0
-			rf.mu.Unlock()
-		}
-	}
-
-}
-
-func decideLeader(rf *Raft) {
+func startElection(rf *Raft) {
 	//fmt.Println("ELECTION STARTS")
 	//rf.mu.Lock()
 	//defer rf.mu.Unlock()
@@ -376,9 +342,10 @@ func decideLeader(rf *Raft) {
 	}
 
 	//rf.votesFor = rf.me
-
+	fmt.Println("we have ", len(rf.peers))
 	//TODO H ILOPOIHSH AUTH EINAI SIRIAKH, NOMIZW PREPEI NA STELNEIS SE THREASD TA REQUEST VOTE KAI NA PAREIS META TA SVSTA
 	for i, _ := range rf.peers {
+
 		var reply RequestVoteReply
 		//fmt.Println("PEER SENT")
 		voteStatus := rf.sendRequestVote(i, &args, &reply) //TODO TSEKARE AN EINAI THREAD H AN THA EPISTREPSEI AMESWS
@@ -409,6 +376,29 @@ func decideLeader(rf *Raft) {
 	rf.mu.Unlock()
 }
 
+func (rf *Raft) sendHeartBeats() {
+	args := AppendEntriesArgs{
+		Term:         rf.currentTerm,
+		LeaderId:     rf.leaderID,
+		PrevLogIndex: 0, //todo se all the entries below again
+		PrevLogTerm:  0,
+		Entries:      rf.Log,
+		LeaderCommit: 0}
+	var reply AppendEntriesReply
+	for i, _ := range rf.peers {
+		heartbeatStatus := rf.sendAppendEntries(i, &args, &reply)
+		if heartbeatStatus == false {
+			//fmt.Println("Heartbeat failed")
+		}
+		if reply.Success == false {
+			rf.mu.Lock()
+			rf.state = 0
+			rf.mu.Unlock()
+		}
+	}
+
+}
+
 //
 // the service or tester wants to create a Raft server. the ports
 // of all the Raft servers (including this one) are in peers[]. this
@@ -436,6 +426,10 @@ func Make(peers []*labrpc.ClientEnd, me int,
 	rf.lastApplied = 0
 	rf.lastTermToVote = -1
 	rf.electionStarted = -1
+
+	/*for i, peer := range peers{
+		fmt.Println(p)
+	}*/
 
 	go rf.startServer()
 	// Your initialization code here (2A, 2B, 2C).
