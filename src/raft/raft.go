@@ -354,7 +354,9 @@ func startElection(rf *Raft) {
 		voteStatus := rf.sendRequestVote(i, &args, &reply) //TODO TSEKARE AN EINAI THREAD H AN THA EPISTREPSEI AMESWS
 		if voteStatus == false {
 			fmt.Println("VOTER IS DOWN") //todo WRITE MORE INFO
-
+			rf.mu.Lock()
+			reply.VoteGranted = false
+			rf.mu.Unlock()
 		}
 		if reply.VoteGranted && reply.Term == rf.currentTerm {
 			votesReceived++
