@@ -363,6 +363,9 @@ func startElection(rf *Raft) {
 		}
 		if reply.VoteGranted && reply.Term == rf.currentTerm {
 			votesReceived++
+			if votesReceived > votesNeeded {
+				break
+			}
 			//fmt.Println("VOTE ++")
 			//fmt.Print(votesReceived)
 			//fmt.Print(votesNeeded)
