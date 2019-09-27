@@ -448,6 +448,7 @@ func sendHeartBeats(rf *Raft) {
 		if i != rf.me {
 			fmt.Println("2")
 			heartbeatStatus := rf.sendAppendEntries(i, &args, &reply)
+			fmt.Println("3")
 			if heartbeatStatus == false {
 				//fmt.Println("Heartbeat failed")
 				reply.Success = true //not online but do not care
@@ -456,6 +457,7 @@ func sendHeartBeats(rf *Raft) {
 					break
 				}
 			}
+			fmt.Println("4")
 			if reply.Success == false {
 				rf.mu.Lock()
 				//rf.currentTerm = reply.Term
@@ -467,7 +469,7 @@ func sendHeartBeats(rf *Raft) {
 		}
 
 	}
-	fmt.Println("3")
+	fmt.Println("10")
 	//if you do not have the quorum online, step down from being leader
 	if failedVotes > len(rf.peers)/2 {
 		fmt.Println("RE MEGALE EISAI KOLOFARDOS POU EMEINES MONOS")
