@@ -363,13 +363,14 @@ func (rf *Raft) startServer() {
 				rf.votesFor = -1
 				rf.mu.Unlock()
 				//fmt.Println("HMOUN CANDIDATE KAI MOU IRTHE LEADER")
-			} else if (time.Now().UnixNano()/int64(time.Millisecond) - rf.electionStarted) > 600+randomElectionSeed {
+			} else { //if (time.Now().UnixNano()/int64(time.Millisecond) - rf.electionStarted) > 600+randomElectionSeed {
+				time.Sleep(400 + time.Duration(randomElectionSeed)*time.Millisecond)
 				rf.mu.Lock()
 				//rf.electionStarted = time.Now().UnixNano() / int64(time.Millisecond)
 				rf.currentTerm++
 				rf.votesFor = rf.me //vote myself
 				rf.lastTermToVote = rf.currentTerm
-				//fmt.Println("KSEKINAW EKLOGES")
+				fmt.Println("KSEKINAW EKLOGES")
 				rf.mu.Unlock()
 				go startElection(rf)
 
