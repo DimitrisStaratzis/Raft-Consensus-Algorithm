@@ -338,7 +338,10 @@ func (rf *Raft) startServer() {
 
 	var randomElectionSeed int64
 	randomElectionSeed = rand.Int63n(100)
+	//var heartbeatsTimer int64
+
 	for {
+		heartbeatTimer := time.Now()
 		//if follower
 		if rf.state == 0 {
 
@@ -373,7 +376,9 @@ func (rf *Raft) startServer() {
 			}
 
 		} else { // if leader
+			time.Sleep(100)
 			go sendHeartBeats(rf)
+
 		}
 
 	}
@@ -442,14 +447,14 @@ func sendHeartBeats(rf *Raft) {
 		Entries:      rf.Log,
 		LeaderCommit: 0}
 
-	fmt.Println("1")
+	//fmt.Println("1")
 	failedVotes := 0
 	for i, _ := range rf.peers {
 		var reply AppendEntriesReply
 		if i != rf.me {
-			fmt.Println("2")
+			//fmt.Println("2")
 			heartbeatStatus := rf.sendAppendEntries(i, &args, &reply)
-			fmt.Println("3")
+			//fmt.Println("3")
 			if heartbeatStatus == false {
 				//fmt.Println("Heartbeat failed")
 				reply.Success = true //not online but do not care
@@ -458,7 +463,7 @@ func sendHeartBeats(rf *Raft) {
 					break
 				}
 			}
-			fmt.Println("4")
+			//fmt.Println("4")
 			if reply.Success == false {
 				rf.mu.Lock()
 				//rf.currentTerm = reply.Term
@@ -470,10 +475,10 @@ func sendHeartBeats(rf *Raft) {
 		}
 
 	}
-	fmt.Println("10")
+	//fmt.Println("10")
 	//if you do not have the quorum online, step down from being leader
 	if failedVotes > len(rf.peers)/2 {
-		fmt.Println("RE MEGALE EISAI KOLOFARDOS POU EMEINES MONOS")
+		//fmt.Println("RE MEGALE EISAI KOLOFARDOS POU EMEINES MONOS")
 		rf.mu.Lock()
 		rf.state = 0
 		rf.leaderID = -1
