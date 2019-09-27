@@ -207,6 +207,9 @@ func (rf *Raft) AppendEntries(args *AppendEntriesArgs, reply *AppendEntriesReply
 	if args.Term < rf.currentTerm {
 		//step down from being a leader
 		//rf.currentTerm = args.Term
+		rf.mu.Lock()
+		rf.state = 0
+		rf.mu.Unlock()
 		reply.Success = false
 	} else {
 		reply.Success = true
@@ -379,7 +382,7 @@ func startElection(rf *Raft) {
 		//rf.mu.Unlock()
 	} else {
 		//become a follower again
-		rf.state = 0
+		//rf.state = 0
 		//rf.currentTerm--
 		//fmt.Println("I was not elected: ", rf.me)
 	}
