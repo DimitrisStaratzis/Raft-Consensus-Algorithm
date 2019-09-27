@@ -171,7 +171,7 @@ func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
 	rf.mu.Lock()
 	//fmt.Println("ma1")
 	fmt.Println("lasttermToVote: ", rf.lastTermToVote, "zitaei psifo sto term: ", args.Term)
-	if rf.lastTermToVote < args.Term { // if server has not voted yet
+	if rf.lastTermToVote != args.Term { // if server has not voted yet
 		fmt.Println("Egw o: ", rf.me, " Prin psifisa sto: ", rf.lastTermToVote, " Twra psifizw sto: ", args.Term)
 		//fmt.Println("mphka", rf.lastTermToVote)
 		//fmt.Println("ma2")
