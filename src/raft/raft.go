@@ -337,10 +337,11 @@ func (rf *Raft) startServer() {
 	//wait for heartbeats
 
 	var randomElectionSeed int64
-	randomElectionSeed = rand.Int63n(100)
+
 	//var heartbeatsTimer int64
 
 	for {
+		randomElectionSeed = rand.Int63n(100)
 		//if follower
 		if rf.state == 0 {
 
@@ -364,7 +365,7 @@ func (rf *Raft) startServer() {
 				//fmt.Println("HMOUN CANDIDATE KAI MOU IRTHE LEADER")
 			} else if (time.Now().UnixNano()/int64(time.Millisecond) - rf.electionStarted) > 600+randomElectionSeed {
 				rf.mu.Lock()
-				rf.electionStarted = time.Now().UnixNano() / int64(time.Millisecond)
+				//rf.electionStarted = time.Now().UnixNano() / int64(time.Millisecond)
 				rf.currentTerm++
 				rf.votesFor = rf.me //vote myself
 				rf.lastTermToVote = rf.currentTerm
