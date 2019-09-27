@@ -167,14 +167,9 @@ type AppendEntriesReply struct {
 //
 func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
 	// Your code here (2A, 2B).
-	//fmt.Println("ma")
 	rf.mu.Lock()
-	//fmt.Println("ma1")
-	//fmt.Println("lasttermToVote: ", rf.lastTermToVote, "zitaei psifo sto term: ", args.Term)
 	if rf.votesFor == -1 { // if server has not voted yet
 		fmt.Println("Egw o: ", rf.me, " Prin psifisa sto: ", rf.lastTermToVote, " Twra psifizw sto: ", args.Term)
-		//fmt.Println("mphka", rf.lastTermToVote)
-		//fmt.Println("ma2")
 		if rf.currentTerm <= args.Term { //&& len(rf.Log)-1 <= args.LastLogIndex {
 			fmt.Println("san: ", rf.me, " psifizw sto term:", args.Term)
 			reply.VoteGranted = true
@@ -182,9 +177,6 @@ func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
 			rf.currentTerm = args.Term
 			rf.votesFor = args.CandidateID
 			reply.Term = rf.currentTerm
-			//if args.CandidateID != rf.me { //if i did not vote for myself, step down to follower state
-			//	rf.state = 0
-			//}
 			fmt.Println("Psifizw ton ", args.CandidateID)
 
 		} else {
@@ -207,7 +199,7 @@ func (rf *Raft) AppendEntries(args *AppendEntriesArgs, reply *AppendEntriesReply
 	if args.Term < rf.currentTerm {
 		//step down from being a leader
 		//rf.currentTerm = args.Term
-		rf.votesFor = -1
+		//rf.votesFor = -1
 		reply.Success = false
 	} else {
 		reply.Success = true
@@ -377,7 +369,8 @@ func startElection(rf *Raft) {
 	if votesReceived > votesNeeded {
 		//rf.mu.Lock()
 		rf.state = 2
-		fmt.Println(rf.currentTerm, votesReceived, votesNeeded, "WE HAVE LEADER: ", rf.me)
+		rf.votesFor = -1
+		fmt.Println(rf.currentTerm, votesReceived, votesNeeded, "NEW LEADER IS: ", rf.me)
 		rf.leaderID = rf.me
 		//rf.mu.Unlock()
 	} else {
