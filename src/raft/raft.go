@@ -245,7 +245,7 @@ func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
 func (rf *Raft) AppendEntries(args *AppendEntriesArgs, reply *AppendEntriesReply) {
 	// Your code here (2A, 2B).
 	reply.Term = rf.currentTerm
-	if args.Term < rf.currentTerm {
+	if args.Term <= rf.currentTerm {
 		//step down from being a leader
 		//rf.currentTerm = args.Term
 		//rf.votesFor = -1
@@ -365,6 +365,7 @@ func (rf *Raft) startServer() {
 				rf.currentTerm++
 				rf.votesFor = rf.me //vote myself
 				rf.lastTermToVote = rf.currentTerm
+				fmt.Println("KSEKINAW EKLOGES")
 				rf.mu.Unlock()
 				go startElection(rf)
 
