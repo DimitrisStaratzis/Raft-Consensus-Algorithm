@@ -170,24 +170,26 @@ func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
 	rf.mu.Lock()
 	if rf.lastTermToVote < args.Term { // if server has not voted yet
 		//fmt.Println("Egw o: ", rf.me, " Prin psifisa sto: ", rf.lastTermToVote, " Twra psifizw sto: ", args.Term)
-		rf.lastTermToVote = args.Term
 		//fmt.Println("mphka", rf.lastTermToVote)
-		if ((rf.currentTerm <= args.Term) && len(rf.Log)-1 <= args.LastLogIndex) || args.CandidateID == rf.me {
+		if (rf.currentTerm <= args.Term) && len(rf.Log)-1 <= args.LastLogIndex {
 			reply.VoteGranted = true
+			rf.lastTermToVote = args.Term
 			rf.currentTerm = args.Term
 			rf.votesFor = args.CandidateID
 			reply.Term = rf.currentTerm
-			if args.CandidateID != rf.me { //if i did not vote for myself, step down to follower state
-				rf.state = 0
-			}
+			//if args.CandidateID != rf.me { //if i did not vote for myself, step down to follower state
+			//	rf.state = 0
+			//}
 			//fmt.Println("Psifizw ton ", args.CandidateID)
 
 		} else {
 			reply.VoteGranted = false
+			reply.Term = rf.currentTerm
 
 		}
 	} else {
 		reply.VoteGranted = false
+		reply.Term = rf.currentTerm
 	}
 	rf.mu.Unlock()
 }
@@ -343,19 +345,19 @@ func startElection(rf *Raft) {
 		args.LastLogTerm = rf.Log[lastLogIndex].Term
 	}
 
-	//TODO H ILOPOIHSH AUTH EINAI SIRIAKH, NOMIZW PREPEI NA STELNEIS SE THREASD TA REQUEST VOTE KAI NA PAREIS META TA SVSTA
 	for i, _ := range rf.peers {
-
-		var reply RequestVoteReply
-		//fmt.Println("PEER SENT")
-		voteStatus := rf.sendRequestVote(i, &args, &reply) //TODO TSEKARE AN EINAI THREAD H AN THA EPISTREPSEI AMESWS
-		if voteStatus == false {
-			fmt.Println("VOTER IS DOWN") //todo WRITE MORE INFO
-		}
-		if reply.VoteGranted && reply.Term == rf.currentTerm {
-			votesReceived++
-			if votesReceived > votesNeeded {
-				break
+		if i != rf.me {
+			var reply RequestVoteReply
+			//fmt.Println("PEER SENT")
+			voteStatus := rf.sendRequestVote(i, &args, &reply)
+			if voteStatus == false {
+				fmt.Println("VOTER IS DOWN")
+			}
+			if reply.VoteGranted && reply.Term == rf.currentTerm {
+				votesReceived++
+				if votesReceived > votesNeeded {
+					break
+				}
 			}
 		}
 
@@ -366,7 +368,6 @@ func startElection(rf *Raft) {
 		rf.state = 2
 		fmt.Println(rf.currentTerm, votesReceived, votesNeeded, "WE HAVE LEADER: ", rf.me)
 		rf.leaderID = rf.me
-		//TODO CHECK IF LEADER IS ONLY ONE.
 		//rf.mu.Unlock()
 	} /* else {
 		//become a follower again
@@ -387,20 +388,23 @@ func (rf *Raft) sendHeartBeats() {
 	var reply AppendEntriesReply
 	failedVotes := 0
 	for i, _ := range rf.peers {
-		heartbeatStatus := rf.sendAppendEntries(i, &args, &reply)
-		if heartbeatStatus == false {
-			//fmt.Println("Heartbeat failed")
-			failedVotes++
-			if failedVotes > len(rf.peers)/2 {
-				break
+		if i != rf.me {
+			heartbeatStatus := rf.sendAppendEntries(i, &args, &reply)
+			if heartbeatStatus == false {
+				//fmt.Println("Heartbeat failed")
+				failedVotes++
+				if failedVotes > len(rf.peers)/2 {
+					break
+				}
+			}
+			if reply.Success == false {
+				rf.mu.Lock()
+				rf.state = 0
+				rf.leaderID = -1
+				rf.mu.Unlock()
 			}
 		}
-		if reply.Success == false {
-			rf.mu.Lock()
-			rf.state = 0
-			rf.leaderID = -1
-			rf.mu.Unlock()
-		}
+
 	}
 	//if you do not have the quorum online, step down from being leader
 	if failedVotes > len(rf.peers)/2 {
