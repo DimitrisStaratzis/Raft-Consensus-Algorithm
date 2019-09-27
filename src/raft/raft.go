@@ -394,9 +394,10 @@ func sendHeartBeats(rf *Raft) {
 		PrevLogTerm:  0,
 		Entries:      rf.Log,
 		LeaderCommit: 0}
-	var reply AppendEntriesReply
+
 	failedVotes := 0
 	for i, _ := range rf.peers {
+		var reply AppendEntriesReply
 		//if i != rf.me {
 		heartbeatStatus := rf.sendAppendEntries(i, &args, &reply)
 		if heartbeatStatus == false {
