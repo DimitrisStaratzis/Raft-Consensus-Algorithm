@@ -341,7 +341,6 @@ func (rf *Raft) startServer() {
 	//var heartbeatsTimer int64
 
 	for {
-		heartbeatTimer := time.Now()
 		//if follower
 		if rf.state == 0 {
 
