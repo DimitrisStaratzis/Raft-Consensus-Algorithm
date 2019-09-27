@@ -426,7 +426,6 @@ func startElection(rf *Raft) {
 		//rf.mu.Lock()
 		rf.state = 2
 		rf.votesFor = -1
-		rf.currentTerm++
 		fmt.Println(rf.currentTerm, votesReceived, votesNeeded, "NEW LEADER IS: ", rf.me)
 		rf.leaderID = rf.me
 		//rf.mu.Unlock()
@@ -468,6 +467,7 @@ func sendHeartBeats(rf *Raft) {
 			if reply.Success == false {
 				rf.mu.Lock()
 				//rf.currentTerm = reply.Term
+				rf.votesFor = -1
 				//fmt.Println("egw o ", rf.me, " kanw step down apo leader")
 				rf.state = 0
 				rf.leaderID = -1
