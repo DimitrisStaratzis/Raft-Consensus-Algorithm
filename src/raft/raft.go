@@ -357,7 +357,9 @@ func (rf *Raft) startServer() {
 			}
 
 		} else if rf.state == 1 {
+
 			//if (time.Now().UnixNano()/int64(time.Millisecond) - rf.electionStarted) > 600+randomElectionSeed {
+			fmt.Println("edw ", 400+time.Duration(randomElectionSeed)*time.Millisecond)
 			time.Sleep(400 + time.Duration(randomElectionSeed)*time.Millisecond)
 			rf.mu.Lock()
 			//rf.electionStarted = time.Now().UnixNano() / int64(time.Millisecond)
@@ -369,7 +371,7 @@ func (rf *Raft) startServer() {
 			go startElection(rf)
 
 		} else { // if leader
-			time.Sleep(50)
+			time.Sleep(150)
 			go sendHeartBeats(rf)
 
 		}
