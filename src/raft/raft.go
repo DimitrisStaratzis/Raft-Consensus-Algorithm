@@ -372,7 +372,7 @@ func (rf *Raft) startServer() {
 			}
 
 		} else { // if leader
-			sendHeartBeats(rf)
+			go sendHeartBeats(rf)
 		}
 
 	}
