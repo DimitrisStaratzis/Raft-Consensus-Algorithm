@@ -170,7 +170,7 @@ func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
 	//fmt.Println("ma")
 	rf.mu.Lock()
 	//fmt.Println("ma1")
-	if rf.lastTermToVote < args.Term { // if server has not voted yet
+	if rf.votesFor != -1 //rf.lastTermToVote < args.Term { // if server has not voted yet
 		//fmt.Println("Egw o: ", rf.me, " Prin psifisa sto: ", rf.lastTermToVote, " Twra psifizw sto: ", args.Term)
 		//fmt.Println("mphka", rf.lastTermToVote)
 		//fmt.Println("ma2")
@@ -318,10 +318,10 @@ func (rf *Raft) startServer() {
 				rf.mu.Lock()
 				rf.electionStarted = time.Now().UnixNano() / int64(time.Millisecond)
 				rf.currentTerm++
-				rf.votesFor = rf.me //vote myself
+				rf.votesFor = -1 //vote myself
 				rf.lastTermToVote = rf.currentTerm
 				rf.mu.Unlock()
-				startElection(rf)
+				go startElection(rf)
 
 			}
 
