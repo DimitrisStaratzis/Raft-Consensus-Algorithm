@@ -162,86 +162,85 @@ type AppendEntriesReply struct {
 	NextTryIndex int
 }
 
-//
-// example RequestVote RPC handler.
-//
-//func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
-//	// Your code here (2A, 2B).
-//	rf.mu.Lock()
-//	if rf.votesFor == -1 { // if server has not voted yet
-//		fmt.Println("Egw o: ", rf.me, " Prin psifisa sto: ", rf.lastTermToVote, " Twra psifizw sto: ", args.Term)
-//		if rf.currentTerm <= args.Term { //&& len(rf.Log)-1 <= args.LastLogIndex {
-//			fmt.Println("san: ", rf.me, " psifizw sto term:", args.Term)
-//			reply.VoteGranted = true
-//			rf.lastTermToVote = args.Term
-//			rf.currentTerm = args.Term
-//			rf.votesFor = args.CandidateID
-//			reply.Term = rf.currentTerm
-//			fmt.Println("Psifizw ton ", args.CandidateID)
-//
-//		} else {
-//			//fmt.Println("ma6")
-//			reply.VoteGranted = false
-//			//reply.Term = rf.currentTerm
-//
-//		}
-//	} else {
-//		fmt.Println("eimai o ", rf.me, " kai den mpainw sto term ", args.Term)
-//		reply.VoteGranted = false
-//		//reply.Term = rf.currentTerm
-//	}
-//	rf.mu.Unlock()
-//}
+//example RequestVote RPC handler.
 
 func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
-	fmt.Println(rf.me, " Received request vote")
-	rf.mu.Lock()
-	defer rf.mu.Unlock()
 	// Your code here (2A, 2B).
-	if args.Term < rf.currentTerm {
-		reply.Term = rf.currentTerm
-		reply.VoteGranted = false
-		fmt.Println(rf.me, "1")
-	} else {
-		if args.Term > rf.currentTerm {
+	rf.mu.Lock()
+	if rf.votesFor == -1 { // if server has not voted yet
+		fmt.Println("Egw o: ", rf.me, " Prin psifisa sto: ", rf.lastTermToVote, " Twra psifizw sto: ", args.Term)
+		if rf.currentTerm <= args.Term { //&& len(rf.Log)-1 <= args.LastLogIndex {
+			fmt.Println("san: ", rf.me, " psifizw sto term:", args.Term)
+			reply.VoteGranted = true
+			rf.lastTermToVote = args.Term
 			rf.currentTerm = args.Term
-			rf.votesFor = -1
-			if rf.leaderID == rf.me {
-				rf.leaderID = -1
-				rf.state = 0
-			}
-		}
-		if rf.votesFor == -1 || rf.votesFor == args.CandidateID {
-			if len(rf.Log) == 0 {
-				reply.VoteGranted = true
-				reply.Term = rf.currentTerm
-				rf.votesFor = args.CandidateID
-				fmt.Println(rf.me, "2")
-			} else {
-				if args.LastLogTerm >= rf.Log[len(rf.Log)-1].Term {
-					if args.LastLogIndex >= len(rf.Log) { //Den eimai sigouros an to len einai to swsto mipws thelei comitindex?
-						reply.VoteGranted = true
-						reply.Term = rf.currentTerm
-						rf.votesFor = args.CandidateID
-						fmt.Println(rf.me, "3")
-					} else {
-						reply.Term = rf.currentTerm
-						reply.VoteGranted = false
-						fmt.Println(rf.me, "4")
-					}
-				} else {
-					reply.Term = rf.currentTerm
-					reply.VoteGranted = false
-					fmt.Println(rf.me, "5")
-				}
-			}
-		} else {
+			rf.votesFor = args.CandidateID
 			reply.Term = rf.currentTerm
+			fmt.Println("Psifizw ton ", args.CandidateID)
+
+		} else {
+			//fmt.Println("ma6")
 			reply.VoteGranted = false
-			fmt.Println(rf.me, "6")
+			//reply.Term = rf.currentTerm
+
 		}
+	} else {
+		fmt.Println("eimai o ", rf.me, " kai den mpainw sto term ", args.Term)
+		reply.VoteGranted = false
+		//reply.Term = rf.currentTerm
 	}
+	rf.mu.Unlock()
 }
+
+//func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
+//	fmt.Println(rf.me, " Received request vote")
+//	rf.mu.Lock()
+//	defer rf.mu.Unlock()
+//	// Your code here (2A, 2B).
+//	if args.Term < rf.currentTerm {
+//		reply.Term = rf.currentTerm
+//		reply.VoteGranted = false
+//		fmt.Println(rf.me, "1")
+//	} else {
+//		if args.Term > rf.currentTerm {
+//			rf.currentTerm = args.Term
+//			rf.votesFor = -1
+//			if rf.leaderID == rf.me {
+//				rf.leaderID = -1
+//				rf.state = 0
+//			}
+//		}
+//		if rf.votesFor == -1 || rf.votesFor == args.CandidateID {
+//			if len(rf.Log) == 0 {
+//				reply.VoteGranted = true
+//				reply.Term = rf.currentTerm
+//				rf.votesFor = args.CandidateID
+//				fmt.Println(rf.me, "2")
+//			} else {
+//				if args.LastLogTerm >= rf.Log[len(rf.Log)-1].Term {
+//					if args.LastLogIndex >= len(rf.Log) { //Den eimai sigouros an to len einai to swsto mipws thelei comitindex?
+//						reply.VoteGranted = true
+//						reply.Term = rf.currentTerm
+//						rf.votesFor = args.CandidateID
+//						fmt.Println(rf.me, "3")
+//					} else {
+//						reply.Term = rf.currentTerm
+//						reply.VoteGranted = false
+//						fmt.Println(rf.me, "4")
+//					}
+//				} else {
+//					reply.Term = rf.currentTerm
+//					reply.VoteGranted = false
+//					fmt.Println(rf.me, "5")
+//				}
+//			}
+//		} else {
+//			reply.Term = rf.currentTerm
+//			reply.VoteGranted = false
+//			fmt.Println(rf.me, "6")
+//		}
+//	}
+//}
 
 func (rf *Raft) AppendEntries(args *AppendEntriesArgs, reply *AppendEntriesReply) {
 	// Your code here (2A, 2B).
