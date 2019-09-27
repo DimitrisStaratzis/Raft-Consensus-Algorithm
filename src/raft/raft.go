@@ -169,7 +169,7 @@ func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
 	// Your code here (2A, 2B).
 	rf.mu.Lock()
 	if rf.lastTermToVote < args.Term { // if server has not voted yet
-		fmt.Println("Egw o: ", rf.me, " Prin psifisa sto: ", rf.lastTermToVote, " Twra psifizw sto: ", args.Term)
+		//fmt.Println("Egw o: ", rf.me, " Prin psifisa sto: ", rf.lastTermToVote, " Twra psifizw sto: ", args.Term)
 		rf.lastTermToVote = args.Term
 		//fmt.Println("mphka", rf.lastTermToVote)
 		if ((rf.currentTerm <= args.Term) && len(rf.Log)-1 <= args.LastLogIndex) || args.CandidateID == rf.me {
@@ -180,7 +180,7 @@ func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
 			if args.CandidateID != rf.me { //if i did not vote for myself, step down to follower state
 				rf.state = 0
 			}
-			fmt.Println("Psifizw ton ", args.CandidateID)
+			//fmt.Println("Psifizw ton ", args.CandidateID)
 
 		} else {
 			reply.VoteGranted = false
