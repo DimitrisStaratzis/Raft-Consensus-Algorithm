@@ -394,6 +394,9 @@ func (rf *Raft) sendHeartBeats() {
 		if heartbeatStatus == false {
 			//fmt.Println("Heartbeat failed")
 			failedVotes++
+			if failedVotes > len(rf.peers)/2 {
+				break
+			}
 		}
 		if reply.Success == false {
 			rf.mu.Lock()
@@ -404,6 +407,7 @@ func (rf *Raft) sendHeartBeats() {
 	}
 	//if you do not have the quorum online, step down from being leader
 	if failedVotes > len(rf.peers)/2 {
+		fmt.Println("RE MEGALE EISAI KOLOFARDOS POU EMEINES MONOS")
 		rf.mu.Lock()
 		rf.state = 0
 		rf.leaderID = -1
