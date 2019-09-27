@@ -317,12 +317,12 @@ func (rf *Raft) startServer() {
 				rf.votesFor = rf.me //vote myself
 				rf.lastTermToVote = rf.currentTerm
 				rf.mu.Unlock()
-				startElection(rf)
+				go startElection(rf)
 
 			}
 
 		} else { // if leader
-			sendHeartBeats(rf)
+			go sendHeartBeats(rf)
 		}
 
 	}
