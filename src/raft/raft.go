@@ -167,7 +167,7 @@ type AppendEntriesReply struct {
 func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
 	// Your code here (2A, 2B).
 	rf.mu.Lock()
-	if rf.votesFor == -1 { // if server has not voted yet
+	if rf.votesFor == -1 || rf.votesFor == args.CandidateID { // if server has not voted yet
 		fmt.Println("Egw o: ", rf.me, " Prin psifisa sto: ", rf.lastTermToVote, " Twra psifizw sto: ", args.Term)
 		if rf.currentTerm <= args.Term { //&& len(rf.Log)-1 <= args.LastLogIndex {
 			fmt.Println("san: ", rf.me, " psifizw sto term:", args.Term)
