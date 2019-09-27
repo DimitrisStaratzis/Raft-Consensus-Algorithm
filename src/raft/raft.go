@@ -321,7 +321,7 @@ func (rf *Raft) startServer() {
 				rf.votesFor = rf.me //vote myself
 				rf.lastTermToVote = rf.currentTerm
 				rf.mu.Unlock()
-				go startElection(rf)
+				startElection(rf)
 
 			}
 
