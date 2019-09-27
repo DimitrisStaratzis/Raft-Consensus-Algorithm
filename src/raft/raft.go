@@ -186,7 +186,7 @@ func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
 
 		}
 	} else {
-		fmt.Println("eimai o ", rf.me, " kai den mpainw sto term ", args.Term, " giati votefor = ", rf.votesFor)
+		//fmt.Println("eimai o ", rf.me, " kai den mpainw sto term ", args.Term, " giati votefor = ", rf.votesFor)
 		reply.VoteGranted = false
 		//reply.Term = rf.currentTerm
 	}
@@ -364,7 +364,7 @@ func (rf *Raft) startServer() {
 			rf.currentTerm++
 			rf.votesFor = rf.me //vote myself
 			rf.lastTermToVote = rf.currentTerm
-			fmt.Println("KSEKINAW EKLOGES")
+			//fmt.Println("KSEKINAW EKLOGES")
 			rf.mu.Unlock()
 			go startElection(rf)
 
