@@ -482,6 +482,7 @@ func sendHeartBeats(rf *Raft) {
 		//fmt.Println("RE MEGALE EISAI KOLOFARDOS POU EMEINES MONOS")
 		rf.mu.Lock()
 		rf.state = 0
+		rf.votesFor = -1
 		rf.leaderID = -1
 		rf.mu.Unlock()
 	}
