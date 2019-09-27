@@ -202,7 +202,7 @@ func (rf *Raft) AppendEntries(args *AppendEntriesArgs, reply *AppendEntriesReply
 		reply.Success = true
 		rf.mu.Lock()
 		rf.currentTerm = args.Term
-		rf.previousHeartBeatTime = time.Now().UnixNano()
+		rf.previousHeartBeatTime = time.Now().UnixNano() / int64(time.Millisecond)
 		rf.mu.Unlock()
 	}
 
@@ -289,7 +289,7 @@ func (rf *Raft) startServer() {
 		//if follower
 		if rf.state == 0 {
 
-			timeSinceLastHeartbeat := time.Now().UnixNano() - rf.previousHeartBeatTime
+			timeSinceLastHeartbeat := time.Now().UnixNano()/int64(time.Millisecond) - rf.previousHeartBeatTime
 			//fmt.Println(string(timeSinceLastHeartbeat) + " :time")
 			if timeSinceLastHeartbeat > (rf.electionTimeThreshold + randomElectionSeed) {
 				rf.mu.Lock()
@@ -302,16 +302,16 @@ func (rf *Raft) startServer() {
 			}
 
 		} else if rf.state == 1 {
-			timeSinceLastHeartbeatCandidate := time.Now().UnixNano() - rf.previousHeartBeatTime
+			timeSinceLastHeartbeatCandidate := time.Now().UnixNano()/int64(time.Millisecond) - rf.previousHeartBeatTime
 			//if received heartbeat as a canidate, become a follower again
 			if timeSinceLastHeartbeatCandidate < rf.electionTimeThreshold {
 				rf.mu.Lock()
 				rf.state = 0
 				rf.mu.Unlock()
 				fmt.Println("HMOUN CANDIDATE KAI MOU IRTHE LEADER")
-			} else if (time.Now().UnixNano() - rf.electionStarted) > 1000000*350 {
+			} else if (time.Now().UnixNano()/int64(time.Millisecond) - rf.electionStarted) > 350 {
 				rf.mu.Lock()
-				rf.electionStarted = time.Now().UnixNano()
+				rf.electionStarted = time.Now().UnixNano() / int64(time.Millisecond)
 				rf.currentTerm++
 				rf.mu.Unlock()
 				startElection(rf)
@@ -430,7 +430,7 @@ func Make(peers []*labrpc.ClientEnd, me int,
 	rf.persister = persister
 	rf.me = me
 	rf.state = 0
-	rf.previousHeartBeatTime = time.Now().UnixNano()
+	rf.previousHeartBeatTime = time.Now().UnixNano() / int64(time.Millisecond)
 	rf.electionTimeThreshold = 200
 	rf.applyChan = applyCh
 	rf.currentTerm = 0
