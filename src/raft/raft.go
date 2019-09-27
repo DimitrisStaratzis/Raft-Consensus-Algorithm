@@ -252,6 +252,7 @@ func (rf *Raft) AppendEntries(args *AppendEntriesArgs, reply *AppendEntriesReply
 		reply.Success = false
 	} else {
 		reply.Success = true
+		fmt.Println("received heartbeat from leader ")
 		rf.mu.Lock()
 		rf.currentTerm = args.Term
 		rf.votesFor = -1
