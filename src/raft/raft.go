@@ -185,7 +185,7 @@ func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
 
 		}
 	} else {
-		fmt.Println("eimai o ", rf.me, " kai den mpainw sto term ", args.Term)
+		fmt.Println("eimai o ", rf.me, " kai den mpainw sto term ", args.Term, " giati votefor = ", rf.votesFor)
 		reply.VoteGranted = false
 		//reply.Term = rf.currentTerm
 	}
