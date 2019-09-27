@@ -19,7 +19,7 @@ package raft
 
 import (
 	"fmt"
-	"math/rand"
+	//"math/rand"
 
 	//"fmt"
 	//"fmt"
@@ -169,20 +169,24 @@ func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
 	// Your code here (2A, 2B).
 	rf.mu.Lock()
 	defer rf.mu.Unlock()
+	//if rf.currentTerm > args.Term{
+	//	rf.state = 0
+	//}
 	if (rf.votesFor == -1) || (rf.votesFor == args.CandidateID) { // if server has not voted yet
 		//fmt.Println("Egw o: ", rf.me, " Prin psifisa sto: ", rf.lastTermToVote, " Twra psifizw sto: ", args.Term)
 		if rf.currentTerm <= args.Term { //&& len(rf.Log)-1 <= args.LastLogIndex {
-			fmt.Print("egw o : ", rf.me, " psifizw sto term: ", args.Term)
+			fmt.Print(": ", rf.me, " Psifizw sto term: ", args.Term)
 			reply.VoteGranted = true
 			rf.lastTermToVote = args.Term
 			rf.currentTerm = args.Term
 			rf.votesFor = args.CandidateID
 			reply.Term = rf.currentTerm
-			fmt.Println(" Psifizw ton ", args.CandidateID)
+			fmt.Println(" ton ", args.CandidateID)
 
 		} else {
 			//fmt.Println("ma6")
 			reply.VoteGranted = false
+
 			//reply.Term = rf.currentTerm
 
 		}
@@ -253,14 +257,18 @@ func (rf *Raft) AppendEntries(args *AppendEntriesArgs, reply *AppendEntriesReply
 		//step down from being a leader
 		//rf.currentTerm = args.Term
 		//rf.votesFor = -1
+		reply.Term = rf.currentTerm
 		reply.Success = false
-	} else {
+	} else if args.Term > rf.currentTerm {
 		reply.Success = true
 		//fmt.Println("received heartbeat from leader ")
 		rf.currentTerm = args.Term
 		rf.votesFor = -1
+		if rf.state == 2 {
+			rf.state = 0
+		}
 		rf.previousHeartBeatTime = time.Now()
-		rf.persist()
+		//rf.persist()
 	}
 }
 
@@ -339,12 +347,12 @@ func (rf *Raft) Kill() {
 func (rf *Raft) startServer() {
 	//wait for heartbeats
 
-	var randomElectionSeed int64
+	//var randomElectionSeed int64
 
 	//var heartbeatsTimer int64
 
 	for {
-		randomElectionSeed = rand.Int63n(200)
+		//randomElectionSeed = rand.Int63n(200)
 		//if follower
 		if rf.state == 0 {
 
@@ -353,7 +361,7 @@ func (rf *Raft) startServer() {
 			if timeSinceLastHeartbeat > rf.electionTimeOut {
 				rf.mu.Lock()
 				rf.state = 1
-				fmt.Println("KANW EKLOGES")
+				fmt.Println(":", rf.me, "EKANA TMT KAI KANW EKLOGES GIA TO TERM ", rf.currentTerm+1)
 				rf.mu.Unlock()
 			}
 
@@ -361,7 +369,7 @@ func (rf *Raft) startServer() {
 
 			//if (time.Now().UnixNano()/int64(time.Millisecond) - rf.electionStarted) > 600+randomElectionSeed {
 			//fmt.Println(400 * time.Millisecond + time.Millisecond*time.Duration(randomElectionSeed))
-			time.Sleep(400*time.Millisecond + time.Millisecond*time.Duration(randomElectionSeed))
+
 			rf.mu.Lock()
 			//rf.electionStarted = time.Now().UnixNano() / int64(time.Millisecond)
 			rf.currentTerm++
@@ -369,7 +377,8 @@ func (rf *Raft) startServer() {
 			rf.lastTermToVote = rf.currentTerm
 			//fmt.Println("KSEKINAW EKLOGES")
 			rf.mu.Unlock()
-			go startElection(rf)
+			startElection(rf)
+			time.Sleep(700 * time.Millisecond)
 
 		} else { // if leader
 			go sendHeartBeats(rf)
@@ -404,6 +413,7 @@ func startElection(rf *Raft) {
 		if i != rf.me {
 			var reply RequestVoteReply
 			//fmt.Println("PEER SENT ", i)
+			fmt.Println(":", rf.me, " KAI STELNW REQUEST VOTE STON ", i, "GIA TO TERM ", rf.currentTerm)
 			voteStatus := rf.sendRequestVote(i, &args, &reply)
 			if voteStatus == false {
 				//fmt.Println("VOTER IS DOWN")
@@ -422,14 +432,9 @@ func startElection(rf *Raft) {
 		//rf.mu.Lock()
 		rf.state = 2
 		rf.votesFor = -1
-		fmt.Println(rf.currentTerm, votesReceived, votesNeeded, "NEW LEADER IS: ", rf.me)
+		fmt.Println("NEW LEADER IS: ", rf.me, "STO TERM ", rf.currentTerm)
 		rf.leaderID = rf.me
 		//rf.mu.Unlock()
-	} else {
-		//become a follower again
-		//rf.state = 0
-		//rf.currentTerm--
-		//fmt.Println("I was not elected: ", rf.me)
 	}
 	rf.mu.Unlock()
 }
@@ -449,6 +454,7 @@ func sendHeartBeats(rf *Raft) {
 		var reply AppendEntriesReply
 		if i != rf.me {
 			//fmt.Println("2")
+			fmt.Println(":", rf.me, " KAI STELNW APPEND STON ", i, "GIA TO TERM ", rf.currentTerm)
 			heartbeatStatus := rf.sendAppendEntries(i, &args, &reply)
 			//fmt.Println("3")
 			if heartbeatStatus == false {
@@ -464,6 +470,7 @@ func sendHeartBeats(rf *Raft) {
 				rf.mu.Lock()
 				//rf.currentTerm = reply.Term
 				rf.votesFor = -1
+				//rf.currentTerm = reply.Term
 				//fmt.Println("egw o ", rf.me, " kanw step down apo leader")
 				rf.state = 0
 				rf.leaderID = -1
@@ -472,6 +479,7 @@ func sendHeartBeats(rf *Raft) {
 		}
 
 	}
+	time.Sleep(2 * time.Second)
 	//fmt.Println("10")
 	//if you do not have the quorum online, step down from being leader
 	if failedVotes > len(rf.peers)/2 {
@@ -499,6 +507,11 @@ func sendHeartBeats(rf *Raft) {
 func Make(peers []*labrpc.ClientEnd, me int,
 	persister *Persister, applyCh chan ApplyMsg) *Raft {
 	rf := &Raft{}
+	fmt.Println("-------------------------------------------------------------------")
+	fmt.Println("-------------------------------------------------------------------")
+	fmt.Println("-------------------------------------------------------------------")
+	fmt.Println("-------------------------------------------------------------------")
+
 	rf.peers = peers
 	rf.persister = persister
 	rf.me = me
