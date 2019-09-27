@@ -168,15 +168,15 @@ func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
 	// Your code here (2A, 2B).
 	rf.mu.Lock()
 	if (rf.votesFor == -1) || (rf.votesFor == args.CandidateID) { // if server has not voted yet
-		fmt.Println("Egw o: ", rf.me, " Prin psifisa sto: ", rf.lastTermToVote, " Twra psifizw sto: ", args.Term)
+		//fmt.Println("Egw o: ", rf.me, " Prin psifisa sto: ", rf.lastTermToVote, " Twra psifizw sto: ", args.Term)
 		if rf.currentTerm <= args.Term { //&& len(rf.Log)-1 <= args.LastLogIndex {
-			fmt.Println("san: ", rf.me, " psifizw sto term:", args.Term)
+			fmt.Print("egw o : ", rf.me, " psifizw sto term: ", args.Term)
 			reply.VoteGranted = true
 			rf.lastTermToVote = args.Term
 			rf.currentTerm = args.Term
 			rf.votesFor = args.CandidateID
 			reply.Term = rf.currentTerm
-			fmt.Println("Psifizw ton ", args.CandidateID)
+			fmt.Println(" Psifizw ton ", args.CandidateID)
 
 		} else {
 			//fmt.Println("ma6")
@@ -410,7 +410,7 @@ func startElection(rf *Raft) {
 			//fmt.Println("PEER SENT ", i)
 			voteStatus := rf.sendRequestVote(i, &args, &reply)
 			if voteStatus == false {
-				fmt.Println("VOTER IS DOWN")
+				//fmt.Println("VOTER IS DOWN")
 			}
 			if reply.VoteGranted { //&& reply.Term == rf.currentTerm {
 				votesReceived++
