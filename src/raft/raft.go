@@ -390,23 +390,23 @@ func sendHeartBeats(rf *Raft) {
 	var reply AppendEntriesReply
 	failedVotes := 0
 	for i, _ := range rf.peers {
-		if i != rf.me {
-			heartbeatStatus := rf.sendAppendEntries(i, &args, &reply)
-			if heartbeatStatus == false {
-				//fmt.Println("Heartbeat failed")
-				failedVotes++
-				if failedVotes > len(rf.peers)/2 {
-					break
-				}
-			}
-			if reply.Success == false {
-				rf.mu.Lock()
-				rf.currentTerm = reply.Term
-				rf.state = 0
-				rf.leaderID = -1
-				rf.mu.Unlock()
+		//if i != rf.me {
+		heartbeatStatus := rf.sendAppendEntries(i, &args, &reply)
+		if heartbeatStatus == false {
+			//fmt.Println("Heartbeat failed")
+			failedVotes++
+			if failedVotes > len(rf.peers)/2 {
+				break
 			}
 		}
+		if reply.Success == false {
+			rf.mu.Lock()
+			rf.currentTerm = reply.Term
+			rf.state = 0
+			rf.leaderID = -1
+			rf.mu.Unlock()
+		}
+		//}
 
 	}
 	//if you do not have the quorum online, step down from being leader
