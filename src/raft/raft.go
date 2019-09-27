@@ -361,14 +361,14 @@ func (rf *Raft) startServer() {
 				rf.state = 0
 				rf.votesFor = -1
 				rf.mu.Unlock()
-				fmt.Println("HMOUN CANDIDATE KAI MOU IRTHE LEADER")
+				//fmt.Println("HMOUN CANDIDATE KAI MOU IRTHE LEADER")
 			} else if (time.Now().UnixNano()/int64(time.Millisecond) - rf.electionStarted) > 600 {
 				rf.mu.Lock()
 				rf.electionStarted = time.Now().UnixNano() / int64(time.Millisecond)
 				rf.currentTerm++
 				rf.votesFor = rf.me //vote myself
 				rf.lastTermToVote = rf.currentTerm
-				fmt.Println("KSEKINAW EKLOGES")
+				//fmt.Println("KSEKINAW EKLOGES")
 				rf.mu.Unlock()
 				go startElection(rf)
 
@@ -466,7 +466,7 @@ func sendHeartBeats(rf *Raft) {
 			if reply.Success == false {
 				rf.mu.Lock()
 				//rf.currentTerm = reply.Term
-				fmt.Println("egw o ", rf.me, " kanw step down apo leader")
+				//fmt.Println("egw o ", rf.me, " kanw step down apo leader")
 				rf.state = 0
 				rf.leaderID = -1
 				rf.mu.Unlock()
