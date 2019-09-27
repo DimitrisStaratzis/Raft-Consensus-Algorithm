@@ -170,7 +170,7 @@ func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
 	//fmt.Println("ma")
 	rf.mu.Lock()
 	//fmt.Println("ma1")
-	fmt.Println("lasttermToVote: ", rf.lastTermToVote, "zitaei psifo sto term: ", args.Term)
+	//fmt.Println("lasttermToVote: ", rf.lastTermToVote, "zitaei psifo sto term: ", args.Term)
 	if rf.votesFor == -1 { // if server has not voted yet
 		fmt.Println("Egw o: ", rf.me, " Prin psifisa sto: ", rf.lastTermToVote, " Twra psifizw sto: ", args.Term)
 		//fmt.Println("mphka", rf.lastTermToVote)
@@ -314,6 +314,7 @@ func (rf *Raft) startServer() {
 			if timeSinceLastHeartbeatCandidate < rf.electionTimeThreshold {
 				rf.mu.Lock()
 				rf.state = 0
+				rf.votesFor = -1
 				rf.mu.Unlock()
 				fmt.Println("HMOUN CANDIDATE KAI MOU IRTHE LEADER")
 			} else if (time.Now().UnixNano()/int64(time.Millisecond) - rf.electionStarted) > 600 {
