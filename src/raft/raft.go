@@ -207,6 +207,7 @@ func (rf *Raft) AppendEntries(args *AppendEntriesArgs, reply *AppendEntriesReply
 	if args.Term < rf.currentTerm {
 		//step down from being a leader
 		//rf.currentTerm = args.Term
+		rf.votesFor = -1
 		reply.Success = false
 	} else {
 		reply.Success = true
