@@ -371,11 +371,12 @@ func startElection(rf *Raft) {
 		fmt.Println(rf.currentTerm, votesReceived, votesNeeded, "WE HAVE LEADER: ", rf.me)
 		rf.leaderID = rf.me
 		//rf.mu.Unlock()
-	} /* else {
+	} else {
 		//become a follower again
 		rf.state = 0
+		rf.currentTerm--
 		//fmt.Println("I was not elected: ", rf.me)
-	}*/
+	}
 	rf.mu.Unlock()
 }
 
