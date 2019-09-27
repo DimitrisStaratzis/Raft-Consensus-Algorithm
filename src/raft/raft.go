@@ -170,7 +170,7 @@ func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
 	//fmt.Println("ma")
 	rf.mu.Lock()
 	//fmt.Println("ma1")
-	if (rf.lastTermToVote < args.Term) || (rf.state == 1 && args.Term == rf.currentTerm) { // if server has not voted yet
+	if rf.lastTermToVote < args.Term { // if server has not voted yet
 		//fmt.Println("Egw o: ", rf.me, " Prin psifisa sto: ", rf.lastTermToVote, " Twra psifizw sto: ", args.Term)
 		//fmt.Println("mphka", rf.lastTermToVote)
 		//fmt.Println("ma2")
@@ -373,12 +373,13 @@ func startElection(rf *Raft) {
 	if votesReceived > votesNeeded {
 		//rf.mu.Lock()
 		rf.state = 2
+		rf.currentTerm++
 		fmt.Println(rf.currentTerm, votesReceived, votesNeeded, "WE HAVE LEADER: ", rf.me)
 		rf.leaderID = rf.me
 		//rf.mu.Unlock()
 	} else {
 		//become a follower again
-		rf.state = 0
+		//rf.state = 0
 		//rf.currentTerm--
 		//fmt.Println("I was not elected: ", rf.me)
 	}
