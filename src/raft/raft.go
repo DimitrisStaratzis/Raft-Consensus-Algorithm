@@ -308,7 +308,7 @@ func (rf *Raft) startServer() {
 				rf.mu.Lock()
 				rf.state = 0
 				rf.mu.Unlock()
-				fmt.Println("HMOUN CANDIDATE KAI MOU IRTHE LEADER")
+				//fmt.Println("HMOUN CANDIDATE KAI MOU IRTHE LEADER")
 			} else if (time.Now().UnixNano()/int64(time.Millisecond) - rf.electionStarted) > 350 {
 				rf.mu.Lock()
 				rf.electionStarted = time.Now().UnixNano() / int64(time.Millisecond)
@@ -326,12 +326,8 @@ func (rf *Raft) startServer() {
 }
 
 func startElection(rf *Raft) {
-	//fmt.Println("ELECTION STARTS")
-	//rf.mu.Lock()
-	//defer rf.mu.Unlock()
 	rf.mu.Lock()
 	rf.votesFor = rf.me //vote myself
-	//rf.currentTerm++
 	rf.mu.Unlock()
 
 	votesNeeded := rf.numberOfPeers / 2 //votes needed except the one rf gives to itself
@@ -349,8 +345,6 @@ func startElection(rf *Raft) {
 		args.LastLogTerm = rf.Log[lastLogIndex].Term
 	}
 
-	//rf.votesFor = rf.me
-	//fmt.Println("we have ", len(rf.peers))
 	//TODO H ILOPOIHSH AUTH EINAI SIRIAKH, NOMIZW PREPEI NA STELNEIS SE THREASD TA REQUEST VOTE KAI NA PAREIS META TA SVSTA
 	for i, _ := range rf.peers {
 
@@ -358,7 +352,7 @@ func startElection(rf *Raft) {
 		//fmt.Println("PEER SENT")
 		voteStatus := rf.sendRequestVote(i, &args, &reply) //TODO TSEKARE AN EINAI THREAD H AN THA EPISTREPSEI AMESWS
 		if voteStatus == false {
-			//fmt.Println("voting failed") //todo WRITE MORE INFO
+			fmt.Println("VOTER IS DOWN") //todo WRITE MORE INFO
 
 		}
 		if reply.VoteGranted && reply.Term == rf.currentTerm {
@@ -366,9 +360,6 @@ func startElection(rf *Raft) {
 			if votesReceived > votesNeeded {
 				break
 			}
-			//fmt.Println("VOTE ++")
-			//fmt.Print(votesReceived)
-			//fmt.Print(votesNeeded)
 		}
 
 	}
