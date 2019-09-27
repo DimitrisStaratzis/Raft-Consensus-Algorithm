@@ -360,7 +360,7 @@ func (rf *Raft) startServer() {
 
 			//if (time.Now().UnixNano()/int64(time.Millisecond) - rf.electionStarted) > 600+randomElectionSeed {
 			fmt.Println("edw ", 400+time.Duration(randomElectionSeed)*time.Millisecond)
-			time.Sleep(400 + time.Duration(randomElectionSeed)*time.Millisecond)
+			time.Sleep(400 + time.Duration(randomElectionSeed)/time.Millisecond)
 			rf.mu.Lock()
 			//rf.electionStarted = time.Now().UnixNano() / int64(time.Millisecond)
 			rf.currentTerm++
