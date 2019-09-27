@@ -329,6 +329,7 @@ func (rf *Raft) startServer() {
 func startElection(rf *Raft) {
 	rf.mu.Lock()
 	rf.votesFor = rf.me //vote myself
+	rf.lastTermToVote = rf.currentTerm
 	rf.mu.Unlock()
 
 	votesNeeded := rf.numberOfPeers / 2 //votes needed except the one rf gives to itself
