@@ -313,12 +313,12 @@ func (rf *Raft) startServer() {
 				rf.electionStarted = time.Now().UnixNano() / int64(time.Millisecond)
 				rf.currentTerm++
 				rf.mu.Unlock()
-				startElection(rf)
+				go startElection(rf)
 
 			}
 
 		} else { // if leader
-			go sendHeartBeats(rf)
+			sendHeartBeats(rf)
 		}
 
 	}
