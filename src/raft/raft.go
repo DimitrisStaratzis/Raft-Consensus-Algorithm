@@ -206,7 +206,7 @@ func (rf *Raft) AppendEntries(args *AppendEntriesArgs, reply *AppendEntriesReply
 	} else {
 		reply.Success = true
 		rf.mu.Lock()
-		rf.currentTerm = args.Term
+		//rf.currentTerm = args.Term
 		rf.previousHeartBeatTime = time.Now().UnixNano() / int64(time.Millisecond)
 		rf.mu.Unlock()
 	}
