@@ -355,12 +355,12 @@ func startElection(rf *Raft) {
 	for i, _ := range rf.peers {
 		//if i != rf.me {
 		var reply RequestVoteReply
-		fmt.Println("PEER SENT ", i)
+		//fmt.Println("PEER SENT ", i)
 		voteStatus := rf.sendRequestVote(i, &args, &reply)
 		if voteStatus == false {
 			fmt.Println("VOTER IS DOWN")
 		}
-		if reply.VoteGranted && reply.Term == rf.currentTerm {
+		if reply.VoteGranted { //&& reply.Term == rf.currentTerm {
 			votesReceived++
 			if votesReceived > votesNeeded {
 				break
