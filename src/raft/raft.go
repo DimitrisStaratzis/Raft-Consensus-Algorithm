@@ -355,26 +355,16 @@ func (rf *Raft) startServer() {
 			}
 
 		} else if rf.state == 1 {
-			timeSinceLastHeartbeatCandidate := time.Now().UnixNano()/int64(time.Millisecond) - rf.previousHeartBeatTime
-			//if received heartbeat as a canidate, become a follower again
-			if timeSinceLastHeartbeatCandidate < rf.electionTimeThreshold {
-				rf.mu.Lock()
-				rf.state = 0
-				rf.votesFor = -1
-				rf.mu.Unlock()
-				//fmt.Println("HMOUN CANDIDATE KAI MOU IRTHE LEADER")
-			} else { //if (time.Now().UnixNano()/int64(time.Millisecond) - rf.electionStarted) > 600+randomElectionSeed {
-				time.Sleep(400 + time.Duration(randomElectionSeed)*time.Millisecond)
-				rf.mu.Lock()
-				//rf.electionStarted = time.Now().UnixNano() / int64(time.Millisecond)
-				rf.currentTerm++
-				rf.votesFor = rf.me //vote myself
-				rf.lastTermToVote = rf.currentTerm
-				fmt.Println("KSEKINAW EKLOGES")
-				rf.mu.Unlock()
-				go startElection(rf)
-
-			}
+			//if (time.Now().UnixNano()/int64(time.Millisecond) - rf.electionStarted) > 600+randomElectionSeed {
+			time.Sleep(400 + time.Duration(randomElectionSeed)*time.Millisecond)
+			rf.mu.Lock()
+			//rf.electionStarted = time.Now().UnixNano() / int64(time.Millisecond)
+			rf.currentTerm++
+			rf.votesFor = rf.me //vote myself
+			rf.lastTermToVote = rf.currentTerm
+			fmt.Println("KSEKINAW EKLOGES")
+			rf.mu.Unlock()
+			go startElection(rf)
 
 		} else { // if leader
 			time.Sleep(100)
