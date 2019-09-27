@@ -371,7 +371,7 @@ func (rf *Raft) startServer() {
 				rf.lastTermToVote = rf.currentTerm
 				//fmt.Println("KSEKINAW EKLOGES")
 				rf.mu.Unlock()
-				go startElection(rf)
+				startElection(rf)
 
 			}
 
