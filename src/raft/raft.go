@@ -374,7 +374,7 @@ func startElection(rf *Raft) {
 	} else {
 		//become a follower again
 		rf.state = 0
-		rf.currentTerm--
+		//rf.currentTerm--
 		//fmt.Println("I was not elected: ", rf.me)
 	}
 	rf.mu.Unlock()
