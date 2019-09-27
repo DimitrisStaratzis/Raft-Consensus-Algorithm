@@ -173,10 +173,10 @@ func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
 		//fmt.Println("mphka", rf.lastTermToVote)
 
 		if (rf.currentTerm <= args.Term) && len(rf.Log)-1 <= args.LastLogIndex {
-			fmt.Println("san: ", rf.me, " psifizw sto term:", args.Term, " ton ", args.CandidateID)
+			fmt.Println("san: ", rf.me, " psifizw sto term:", args.Term)
 			reply.VoteGranted = true
 			rf.lastTermToVote = args.Term
-			//rf.currentTerm = args.Term
+			rf.currentTerm = args.Term
 			rf.votesFor = args.CandidateID
 			reply.Term = rf.currentTerm
 			//if args.CandidateID != rf.me { //if i did not vote for myself, step down to follower state
@@ -201,12 +201,12 @@ func (rf *Raft) AppendEntries(args *AppendEntriesArgs, reply *AppendEntriesReply
 	reply.Term = rf.currentTerm
 	if args.Term < rf.currentTerm {
 		//step down from being a leader
-		//rf.currentTerm = args.Term
+		rf.currentTerm = args.Term
 		reply.Success = false
 	} else {
 		reply.Success = true
 		rf.mu.Lock()
-		//rf.currentTerm = args.Term
+		rf.currentTerm = args.Term
 		rf.previousHeartBeatTime = time.Now().UnixNano() / int64(time.Millisecond)
 		rf.mu.Unlock()
 	}
@@ -310,7 +310,7 @@ func (rf *Raft) startServer() {
 				rf.state = 0
 				rf.mu.Unlock()
 				//fmt.Println("HMOUN CANDIDATE KAI MOU IRTHE LEADER")
-			} else if (time.Now().UnixNano()/int64(time.Millisecond) - rf.electionStarted) > 600+randomElectionSeed {
+			} else if (time.Now().UnixNano()/int64(time.Millisecond) - rf.electionStarted) > 700 {
 				rf.mu.Lock()
 				rf.electionStarted = time.Now().UnixNano() / int64(time.Millisecond)
 				rf.currentTerm++
@@ -367,7 +367,7 @@ func startElection(rf *Raft) {
 	if votesReceived > votesNeeded {
 		//rf.mu.Lock()
 		rf.state = 2
-		fmt.Println(rf.currentTerm, votesReceived, votesNeeded, "WE HAVE LEADER: ", rf.me, " In term ", rf.currentTerm)
+		fmt.Println(rf.currentTerm, votesReceived, votesNeeded, "WE HAVE LEADER: ", rf.me)
 		rf.leaderID = rf.me
 		//rf.mu.Unlock()
 	} /* else {
@@ -400,7 +400,7 @@ func sendHeartBeats(rf *Raft) {
 			}
 			if reply.Success == false {
 				rf.mu.Lock()
-				//rf.currentTerm = reply.Term
+				rf.currentTerm = reply.Term
 				rf.state = 0
 				rf.leaderID = -1
 				rf.mu.Unlock()
