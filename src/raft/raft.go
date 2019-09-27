@@ -313,7 +313,7 @@ func (rf *Raft) startServer() {
 				rf.electionStarted = time.Now().UnixNano() / int64(time.Millisecond)
 				rf.currentTerm++
 				rf.mu.Unlock()
-				go startElection(rf)
+				startElection(rf)
 
 			}
 
