@@ -167,13 +167,13 @@ type AppendEntriesReply struct {
 //
 func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
 	// Your code here (2A, 2B).
-	fmt.Println("ma")
+	//fmt.Println("ma")
 	rf.mu.Lock()
-	fmt.Println("ma1")
+	//fmt.Println("ma1")
 	if rf.lastTermToVote < args.Term { // if server has not voted yet
 		//fmt.Println("Egw o: ", rf.me, " Prin psifisa sto: ", rf.lastTermToVote, " Twra psifizw sto: ", args.Term)
 		//fmt.Println("mphka", rf.lastTermToVote)
-		fmt.Println("ma2")
+		//fmt.Println("ma2")
 		if (rf.currentTerm <= args.Term) && len(rf.Log)-1 <= args.LastLogIndex {
 			fmt.Println("san: ", rf.me, " psifizw sto term:", args.Term)
 			reply.VoteGranted = true
@@ -187,15 +187,15 @@ func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
 			//fmt.Println("Psifizw ton ", args.CandidateID)
 
 		} else {
-			fmt.Println("ma6")
+			//fmt.Println("ma6")
 			reply.VoteGranted = false
-			reply.Term = rf.currentTerm
+			//reply.Term = rf.currentTerm
 
 		}
 	} else {
 		fmt.Println("ma7")
 		reply.VoteGranted = false
-		reply.Term = rf.currentTerm
+		//reply.Term = rf.currentTerm
 	}
 	rf.mu.Unlock()
 }
