@@ -367,7 +367,7 @@ func (rf *Raft) startServer() {
 				rf.lastTermToVote = rf.currentTerm
 				fmt.Println("KSEKINAW EKLOGES")
 				rf.mu.Unlock()
-				startElection(rf)
+				go startElection(rf)
 
 			}
 
@@ -448,7 +448,7 @@ func sendHeartBeats(rf *Raft) {
 			heartbeatStatus := rf.sendAppendEntries(i, &args, &reply)
 			if heartbeatStatus == false {
 				//fmt.Println("Heartbeat failed")
-				reply.Success = true
+				reply.Success = true //not online but do not care
 				failedVotes++
 				if failedVotes > len(rf.peers)/2 {
 					break
