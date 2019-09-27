@@ -171,33 +171,33 @@ func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
 	rf.mu.Lock()
 	//fmt.Println("ma1")
 	fmt.Println("lasttermToVote: ", rf.lastTermToVote, "zitaei psifo sto term: ", args.Term)
-	//if rf.lastTermToVote < args.Term { // if server has not voted yet
-	fmt.Println("Egw o: ", rf.me, " Prin psifisa sto: ", rf.lastTermToVote, " Twra psifizw sto: ", args.Term)
-	//fmt.Println("mphka", rf.lastTermToVote)
-	//fmt.Println("ma2")
-	if rf.currentTerm <= args.Term { //&& len(rf.Log)-1 <= args.LastLogIndex {
-		fmt.Println("san: ", rf.me, " psifizw sto term:", args.Term)
-		reply.VoteGranted = true
-		rf.lastTermToVote = args.Term
-		rf.currentTerm = args.Term
-		rf.votesFor = args.CandidateID
-		reply.Term = rf.currentTerm
-		//if args.CandidateID != rf.me { //if i did not vote for myself, step down to follower state
-		//	rf.state = 0
-		//}
-		fmt.Println("Psifizw ton ", args.CandidateID)
+	if rf.votesFor != -1 { // if server has not voted yet
+		fmt.Println("Egw o: ", rf.me, " Prin psifisa sto: ", rf.lastTermToVote, " Twra psifizw sto: ", args.Term)
+		//fmt.Println("mphka", rf.lastTermToVote)
+		//fmt.Println("ma2")
+		if rf.currentTerm <= args.Term { //&& len(rf.Log)-1 <= args.LastLogIndex {
+			fmt.Println("san: ", rf.me, " psifizw sto term:", args.Term)
+			reply.VoteGranted = true
+			rf.lastTermToVote = args.Term
+			rf.currentTerm = args.Term
+			rf.votesFor = args.CandidateID
+			reply.Term = rf.currentTerm
+			//if args.CandidateID != rf.me { //if i did not vote for myself, step down to follower state
+			//	rf.state = 0
+			//}
+			fmt.Println("Psifizw ton ", args.CandidateID)
 
+		} else {
+			//fmt.Println("ma6")
+			reply.VoteGranted = false
+			//reply.Term = rf.currentTerm
+
+		}
 	} else {
-		//fmt.Println("ma6")
-		reply.VoteGranted = false
-		//reply.Term = rf.currentTerm
-
-	}
-	/*} else {
 		//fmt.Println("ma7")
 		reply.VoteGranted = false
 		//reply.Term = rf.currentTerm
-	}*/
+	}
 	rf.mu.Unlock()
 }
 
@@ -212,6 +212,7 @@ func (rf *Raft) AppendEntries(args *AppendEntriesArgs, reply *AppendEntriesReply
 		reply.Success = true
 		rf.mu.Lock()
 		rf.currentTerm = args.Term
+		rf.votesFor = -1
 		rf.previousHeartBeatTime = time.Now().UnixNano() / int64(time.Millisecond)
 		rf.mu.Unlock()
 	}
