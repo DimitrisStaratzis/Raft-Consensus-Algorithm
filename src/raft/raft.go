@@ -409,6 +409,7 @@ func sendHeartBeats(rf *Raft) {
 		if reply.Success == false {
 			rf.mu.Lock()
 			rf.currentTerm = reply.Term
+			fmt.Println("egw o ", rf.me, " kanw step down apo leader")
 			rf.state = 0
 			rf.leaderID = -1
 			rf.mu.Unlock()
