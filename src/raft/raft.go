@@ -343,7 +343,7 @@ func (rf *Raft) startServer() {
 	//var heartbeatsTimer int64
 
 	for {
-		randomElectionSeed = rand.Int63n(100)
+		randomElectionSeed = rand.Int63n(200)
 		//if follower
 		if rf.state == 0 {
 
@@ -360,7 +360,7 @@ func (rf *Raft) startServer() {
 
 			//if (time.Now().UnixNano()/int64(time.Millisecond) - rf.electionStarted) > 600+randomElectionSeed {
 			fmt.Println("edw ", 400+time.Duration(randomElectionSeed)/time.Millisecond)
-			time.Sleep(4000)
+			time.Sleep(400*time.Millisecond + time.Millisecond*time.Duration(randomElectionSeed))
 			rf.mu.Lock()
 			//rf.electionStarted = time.Now().UnixNano() / int64(time.Millisecond)
 			rf.currentTerm++
