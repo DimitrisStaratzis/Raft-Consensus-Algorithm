@@ -441,10 +441,12 @@ func sendHeartBeats(rf *Raft) {
 		Entries:      rf.Log,
 		LeaderCommit: 0}
 
+	fmt.Println("1")
 	failedVotes := 0
 	for i, _ := range rf.peers {
 		var reply AppendEntriesReply
 		if i != rf.me {
+			fmt.Println("2")
 			heartbeatStatus := rf.sendAppendEntries(i, &args, &reply)
 			if heartbeatStatus == false {
 				//fmt.Println("Heartbeat failed")
@@ -465,6 +467,7 @@ func sendHeartBeats(rf *Raft) {
 		}
 
 	}
+	fmt.Println("3")
 	//if you do not have the quorum online, step down from being leader
 	if failedVotes > len(rf.peers)/2 {
 		fmt.Println("RE MEGALE EISAI KOLOFARDOS POU EMEINES MONOS")
