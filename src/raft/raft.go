@@ -207,9 +207,6 @@ func (rf *Raft) AppendEntries(args *AppendEntriesArgs, reply *AppendEntriesReply
 	if args.Term < rf.currentTerm {
 		//step down from being a leader
 		//rf.currentTerm = args.Term
-		rf.mu.Lock()
-		rf.state = 0
-		rf.mu.Unlock()
 		reply.Success = false
 	} else {
 		reply.Success = true
@@ -412,7 +409,7 @@ func sendHeartBeats(rf *Raft) {
 			}
 			if reply.Success == false {
 				rf.mu.Lock()
-				rf.currentTerm = reply.Term
+				//rf.currentTerm = reply.Term
 				fmt.Println("egw o ", rf.me, " kanw step down apo leader")
 				rf.state = 0
 				rf.leaderID = -1
