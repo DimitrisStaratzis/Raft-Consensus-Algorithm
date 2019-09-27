@@ -398,6 +398,7 @@ func sendHeartBeats(rf *Raft) {
 			}
 			if reply.Success == false {
 				rf.mu.Lock()
+				rf.currentTerm = reply.Term
 				rf.state = 0
 				rf.leaderID = -1
 				rf.mu.Unlock()
