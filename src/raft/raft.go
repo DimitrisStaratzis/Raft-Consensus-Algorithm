@@ -170,7 +170,7 @@ func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
 	//fmt.Println("ma")
 	rf.mu.Lock()
 	//fmt.Println("ma1")
-	if rf.lastTermToVote < args.Term { // if server has not voted yet
+	if (rf.lastTermToVote < args.Term) || (rf.state == 1 && args.Term == rf.currentTerm) { // if server has not voted yet
 		//fmt.Println("Egw o: ", rf.me, " Prin psifisa sto: ", rf.lastTermToVote, " Twra psifizw sto: ", args.Term)
 		//fmt.Println("mphka", rf.lastTermToVote)
 		//fmt.Println("ma2")
@@ -292,7 +292,7 @@ func (rf *Raft) startServer() {
 	//wait for heartbeats
 
 	var randomElectionSeed int64
-	randomElectionSeed = rand.Int63n(100) * 2
+	randomElectionSeed = rand.Int63n(100)
 	for {
 		//if follower
 		if rf.state == 0 {
