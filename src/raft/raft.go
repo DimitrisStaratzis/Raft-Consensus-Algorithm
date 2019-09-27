@@ -61,7 +61,7 @@ type Raft struct {
 	// Look at the paper's Figure 2 for a description of what
 	// state a Raft server must maintain.
 	state                 int //0 for follower, 1 for candidate, 2 for leader
-	previousHeartBeatTime int64
+	previousHeartBeatTime time.Time
 	electionTimeThreshold int64
 	leaderID              int
 	applyChan             chan ApplyMsg
@@ -73,6 +73,7 @@ type Raft struct {
 	lastTermToVote        int
 	electionStarted       int64
 	numberOfPeers         int
+	electionTimeOut       time.Duration
 }
 
 // return currentTerm and whether this server
@@ -258,7 +259,7 @@ func (rf *Raft) AppendEntries(args *AppendEntriesArgs, reply *AppendEntriesReply
 		//fmt.Println("received heartbeat from leader ")
 		rf.currentTerm = args.Term
 		rf.votesFor = -1
-		rf.previousHeartBeatTime = time.Now().UnixNano() / int64(time.Millisecond)
+		rf.previousHeartBeatTime = time.Now()
 		rf.persist()
 	}
 }
@@ -347,19 +348,19 @@ func (rf *Raft) startServer() {
 		//if follower
 		if rf.state == 0 {
 
-			timeSinceLastHeartbeat := time.Now().UnixNano()/int64(time.Millisecond) - rf.previousHeartBeatTime
+			timeSinceLastHeartbeat := time.Now().Sub(rf.previousHeartBeatTime)
 			//fmt.Println(string(timeSinceLastHeartbeat) + " :time")
-			if timeSinceLastHeartbeat > (rf.electionTimeThreshold + randomElectionSeed) {
+			if timeSinceLastHeartbeat > rf.electionTimeOut {
 				rf.mu.Lock()
 				rf.state = 1
-				//fmt.Println("KANW EKLOGES")
+				fmt.Println("KANW EKLOGES")
 				rf.mu.Unlock()
 			}
 
 		} else if rf.state == 1 {
 
 			//if (time.Now().UnixNano()/int64(time.Millisecond) - rf.electionStarted) > 600+randomElectionSeed {
-			fmt.Println("edw ", 400+time.Duration(randomElectionSeed)/time.Millisecond)
+			//fmt.Println(400 * time.Millisecond + time.Millisecond*time.Duration(randomElectionSeed))
 			time.Sleep(400*time.Millisecond + time.Millisecond*time.Duration(randomElectionSeed))
 			rf.mu.Lock()
 			//rf.electionStarted = time.Now().UnixNano() / int64(time.Millisecond)
@@ -371,8 +372,8 @@ func (rf *Raft) startServer() {
 			go startElection(rf)
 
 		} else { // if leader
-			time.Sleep(150)
 			go sendHeartBeats(rf)
+			time.Sleep(100 * time.Millisecond)
 
 		}
 
@@ -502,7 +503,7 @@ func Make(peers []*labrpc.ClientEnd, me int,
 	rf.persister = persister
 	rf.me = me
 	rf.state = 0
-	rf.previousHeartBeatTime = time.Now().UnixNano() / int64(time.Millisecond)
+	rf.previousHeartBeatTime = time.Now()
 	rf.electionTimeThreshold = 200
 	rf.applyChan = applyCh
 	rf.currentTerm = 0
@@ -513,6 +514,7 @@ func Make(peers []*labrpc.ClientEnd, me int,
 	rf.lastTermToVote = -1
 	rf.electionStarted = -1
 	rf.numberOfPeers = len(peers)
+	rf.electionTimeOut = time.Duration(3*(rf.me+1)) * 100 * time.Millisecond
 
 	/*for i, peer := range peers{
 		fmt.Println(p)
