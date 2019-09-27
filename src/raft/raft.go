@@ -297,9 +297,6 @@ func (rf *Raft) startServer() {
 				rf.state = 1
 				//fmt.Println("KANW EKLOGES")
 				rf.mu.Unlock()
-				//rf.resetPeerVotes()
-				//fmt.Println("TIME OUT")
-				//rf.startElection() //thelei GO?
 			}
 
 		} else if rf.state == 1 {
@@ -315,7 +312,7 @@ func (rf *Raft) startServer() {
 				rf.electionStarted = time.Now().UnixNano() / int64(time.Millisecond)
 				rf.currentTerm++
 				rf.mu.Unlock()
-				startElection(rf)
+				go startElection(rf)
 
 			}
 
@@ -354,9 +351,6 @@ func startElection(rf *Raft) {
 		voteStatus := rf.sendRequestVote(i, &args, &reply) //TODO TSEKARE AN EINAI THREAD H AN THA EPISTREPSEI AMESWS
 		if voteStatus == false {
 			fmt.Println("VOTER IS DOWN") //todo WRITE MORE INFO
-			rf.mu.Lock()
-			reply.VoteGranted = false
-			rf.mu.Unlock()
 		}
 		if reply.VoteGranted && reply.Term == rf.currentTerm {
 			votesReceived++
