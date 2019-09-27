@@ -448,6 +448,7 @@ func sendHeartBeats(rf *Raft) {
 			heartbeatStatus := rf.sendAppendEntries(i, &args, &reply)
 			if heartbeatStatus == false {
 				//fmt.Println("Heartbeat failed")
+				reply.Success = true
 				failedVotes++
 				if failedVotes > len(rf.peers)/2 {
 					break
