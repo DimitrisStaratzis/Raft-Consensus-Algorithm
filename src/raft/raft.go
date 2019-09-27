@@ -314,13 +314,13 @@ func (rf *Raft) startServer() {
 				rf.mu.Lock()
 				rf.state = 0
 				rf.mu.Unlock()
-				//fmt.Println("HMOUN CANDIDATE KAI MOU IRTHE LEADER")
+				fmt.Println("HMOUN CANDIDATE KAI MOU IRTHE LEADER")
 			} else if (time.Now().UnixNano()/int64(time.Millisecond) - rf.electionStarted) > 350 {
 				rf.mu.Lock()
 				rf.electionStarted = time.Now().UnixNano() / int64(time.Millisecond)
 				rf.currentTerm++
 				rf.votesFor = rf.me //vote myself
-				//rf.lastTermToVote = rf.currentTerm
+				rf.lastTermToVote = rf.currentTerm
 				rf.mu.Unlock()
 				go startElection(rf)
 
