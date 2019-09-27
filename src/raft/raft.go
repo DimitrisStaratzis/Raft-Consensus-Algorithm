@@ -176,7 +176,7 @@ func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
 			fmt.Println("san: ", rf.me, " psifizw sto term:", args.Term, " ton ", args.CandidateID)
 			reply.VoteGranted = true
 			rf.lastTermToVote = args.Term
-			rf.currentTerm = args.Term
+			//rf.currentTerm = args.Term
 			rf.votesFor = args.CandidateID
 			reply.Term = rf.currentTerm
 			//if args.CandidateID != rf.me { //if i did not vote for myself, step down to follower state
@@ -206,7 +206,7 @@ func (rf *Raft) AppendEntries(args *AppendEntriesArgs, reply *AppendEntriesReply
 	} else {
 		reply.Success = true
 		rf.mu.Lock()
-		rf.currentTerm = args.Term
+		//rf.currentTerm = args.Term
 		rf.previousHeartBeatTime = time.Now().UnixNano() / int64(time.Millisecond)
 		rf.mu.Unlock()
 	}
