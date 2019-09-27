@@ -171,7 +171,7 @@ func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
 	rf.mu.Lock()
 	//fmt.Println("ma1")
 	if rf.lastTermToVote < args.Term { // if server has not voted yet
-		//fmt.Println("Egw o: ", rf.me, " Prin psifisa sto: ", rf.lastTermToVote, " Twra psifizw sto: ", args.Term)
+		fmt.Println("Egw o: ", rf.me, " Prin psifisa sto: ", rf.lastTermToVote, " Twra psifizw sto: ", args.Term)
 		//fmt.Println("mphka", rf.lastTermToVote)
 		//fmt.Println("ma2")
 		if rf.currentTerm <= args.Term { //&& len(rf.Log)-1 <= args.LastLogIndex {
@@ -184,7 +184,7 @@ func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
 			//if args.CandidateID != rf.me { //if i did not vote for myself, step down to follower state
 			//	rf.state = 0
 			//}
-			//fmt.Println("Psifizw ton ", args.CandidateID)
+			fmt.Println("Psifizw ton ", args.CandidateID)
 
 		} else {
 			//fmt.Println("ma6")
@@ -373,7 +373,6 @@ func startElection(rf *Raft) {
 	if votesReceived > votesNeeded {
 		//rf.mu.Lock()
 		rf.state = 2
-		rf.currentTerm++
 		fmt.Println(rf.currentTerm, votesReceived, votesNeeded, "WE HAVE LEADER: ", rf.me)
 		rf.leaderID = rf.me
 		//rf.mu.Unlock()
