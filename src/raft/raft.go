@@ -320,7 +320,7 @@ func (rf *Raft) startServer() {
 				rf.electionStarted = time.Now().UnixNano() / int64(time.Millisecond)
 				rf.currentTerm++
 				rf.votesFor = rf.me //vote myself
-				//rf.lastTermToVote = rf.currentTerm
+				rf.lastTermToVote = rf.currentTerm
 				rf.mu.Unlock()
 				go startElection(rf)
 
