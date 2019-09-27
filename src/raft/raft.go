@@ -168,9 +168,9 @@ type AppendEntriesReply struct {
 func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
 	// Your code here (2A, 2B).
 	//fmt.Println("ma")
-	//rf.mu.Lock()
+	rf.mu.Lock()
 	//fmt.Println("ma1")
-	if rf.lastTermToVote < args.Term { // if server has not voted yet
+	if (rf.lastTermToVote < args.Term) || rf.state == 1 { // if server has not voted yet
 		//fmt.Println("Egw o: ", rf.me, " Prin psifisa sto: ", rf.lastTermToVote, " Twra psifizw sto: ", args.Term)
 		//fmt.Println("mphka", rf.lastTermToVote)
 		//fmt.Println("ma2")
@@ -197,7 +197,7 @@ func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
 		reply.VoteGranted = false
 		//reply.Term = rf.currentTerm
 	}
-	//rf.mu.Unlock()
+	rf.mu.Unlock()
 }
 
 func (rf *Raft) AppendEntries(args *AppendEntriesArgs, reply *AppendEntriesReply) {
