@@ -369,7 +369,7 @@ func (rf *Raft) startServer() {
 			go startElection(rf)
 
 		} else { // if leader
-			time.Sleep(100)
+			time.Sleep(50)
 			go sendHeartBeats(rf)
 
 		}
