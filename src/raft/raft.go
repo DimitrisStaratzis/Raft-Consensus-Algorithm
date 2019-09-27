@@ -426,6 +426,7 @@ func startElection(rf *Raft) {
 		//rf.mu.Lock()
 		rf.state = 2
 		rf.votesFor = -1
+		rf.currentTerm++
 		fmt.Println(rf.currentTerm, votesReceived, votesNeeded, "NEW LEADER IS: ", rf.me)
 		rf.leaderID = rf.me
 		//rf.mu.Unlock()
