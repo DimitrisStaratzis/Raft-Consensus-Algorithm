@@ -208,7 +208,6 @@ func (rf *Raft) AppendEntries(args *AppendEntriesArgs, reply *AppendEntriesReply
 		rf.previousHeartBeatTime = time.Now().UnixNano() / int64(time.Millisecond)
 		rf.mu.Unlock()
 	}
-
 }
 
 //
@@ -319,7 +318,7 @@ func (rf *Raft) startServer() {
 			}
 
 		} else { // if leader
-			rf.sendHeartBeats()
+			go sendHeartBeats(rf)
 		}
 
 	}
@@ -331,7 +330,7 @@ func startElection(rf *Raft) {
 	rf.mu.Unlock()
 
 	votesNeeded := rf.numberOfPeers / 2 //votes needed except the one rf gives to itself
-	votesReceived := 1
+	votesReceived := 1                  //myself
 	lastLogIndex := len(rf.Log) - 1
 	var args = RequestVoteArgs{}
 
@@ -377,10 +376,10 @@ func startElection(rf *Raft) {
 	rf.mu.Unlock()
 }
 
-func (rf *Raft) sendHeartBeats() {
+func sendHeartBeats(rf *Raft) {
 	args := AppendEntriesArgs{
 		Term:         rf.currentTerm,
-		LeaderId:     rf.leaderID,
+		LeaderId:     rf.me,
 		PrevLogIndex: 0, //todo se all the entries below again
 		PrevLogTerm:  0,
 		Entries:      rf.Log,
