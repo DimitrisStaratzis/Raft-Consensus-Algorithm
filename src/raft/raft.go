@@ -331,7 +331,7 @@ func startElection(rf *Raft) {
 	rf.mu.Unlock()
 
 	votesNeeded := rf.numberOfPeers / 2 //votes needed except the one rf gives to itself
-	votesReceived := 0
+	votesReceived := 1
 	lastLogIndex := len(rf.Log) - 1
 	var args = RequestVoteArgs{}
 
