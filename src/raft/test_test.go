@@ -51,6 +51,7 @@ func TestReElection2A(t *testing.T) {
 	fmt.Printf("  ... Passed0\n")
 
 	// if the leader disconnects, a new one should be elected.
+	fmt.Println("SERVER ", leader1, " GOES OFFLINE")
 	cfg.disconnect(leader1)
 	cfg.checkOneLeader()
 	fmt.Printf("  ... Passed1\n")
