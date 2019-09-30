@@ -18,9 +18,10 @@ package raft
 //
 
 import (
-	"fmt"
+	//"fmt"
 	//"math/rand"
 
+	"fmt"
 	//"fmt"
 	//"fmt"
 	"sync"
@@ -169,13 +170,13 @@ func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
 	// Your code here (2A, 2B).
 	rf.mu.Lock()
 	defer rf.mu.Unlock()
-	//step down to follower
-	if rf.currentTerm >= args.Term {
-		rf.state = 0
-		rf.votesFor = -1
-	}
+	////step down to follower
+	//if rf.currentTerm < args.Term {
+	//	rf.state = 0
+	//	rf.previousHeartBeatTime = time.Now()
+	//	rf.votesFor = -1
+	//}
 	if (rf.votesFor == -1) || (rf.votesFor == args.CandidateID) { // if server has not voted yet
-		//fmt.Println("Egw o: ", rf.me, " Prin psifisa sto: ", rf.lastTermToVote, " Twra psifizw sto: ", args.Term)
 		if rf.currentTerm <= args.Term { //&& len(rf.Log)-1 <= args.LastLogIndex {
 			fmt.Print(": ", rf.me, " Psifizw sto term: ", args.Term)
 			reply.VoteGranted = true
@@ -186,93 +187,33 @@ func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
 			fmt.Println(" ton ", args.CandidateID)
 
 		} else {
-			//fmt.Println("ma6")
 			fmt.Print(": ", rf.me, " den psifizw sto term: ", args.Term, " ton ", args.CandidateID)
 			reply.VoteGranted = false
 
-			//reply.Term = rf.currentTerm
-
 		}
 	} else {
-		//fmt.Println("eimai o ", rf.me, " kai den mpainw sto term ", args.Term, " giati votefor = ", rf.votesFor)
 		reply.VoteGranted = false
-		//reply.Term = rf.currentTerm
 	}
 	rf.persist()
 }
-
-//func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
-//	fmt.Println(rf.me, " Received request vote")
-//	rf.mu.Lock()
-//	defer rf.mu.Unlock()
-//	// Your code here (2A, 2B).
-//	if args.Term < rf.currentTerm {
-//		reply.Term = rf.currentTerm
-//		reply.VoteGranted = false
-//		fmt.Println(rf.me, "1")
-//	} else {
-//		if args.Term > rf.currentTerm {
-//			rf.currentTerm = args.Term
-//			rf.votesFor = -1
-//			if rf.leaderID == rf.me {
-//				rf.leaderID = -1
-//				rf.state = 0
-//			}
-//		}
-//		if rf.votesFor == -1 || rf.votesFor == args.CandidateID {
-//			if len(rf.Log) == 0 {
-//				reply.VoteGranted = true
-//				reply.Term = rf.currentTerm
-//				rf.votesFor = args.CandidateID
-//				fmt.Println(rf.me, "2")
-//			} else {
-//				if args.LastLogTerm >= rf.Log[len(rf.Log)-1].Term {
-//					if args.LastLogIndex >= len(rf.Log) { //Den eimai sigouros an to len einai to swsto mipws thelei comitindex?
-//						reply.VoteGranted = true
-//						reply.Term = rf.currentTerm
-//						rf.votesFor = args.CandidateID
-//						fmt.Println(rf.me, "3")
-//					} else {
-//						reply.Term = rf.currentTerm
-//						reply.VoteGranted = false
-//						fmt.Println(rf.me, "4")
-//					}
-//				} else {
-//					reply.Term = rf.currentTerm
-//					reply.VoteGranted = false
-//					fmt.Println(rf.me, "5")
-//				}
-//			}
-//		} else {
-//			reply.Term = rf.currentTerm
-//			reply.VoteGranted = false
-//			fmt.Println(rf.me, "6")
-//		}
-//	}
-//}
 
 func (rf *Raft) AppendEntries(args *AppendEntriesArgs, reply *AppendEntriesReply) {
 	// Your code here (2A, 2B).
 	rf.mu.Lock()
 	defer rf.mu.Unlock()
-	fmt.Println(": ", rf.me, " ELAVA APPEND APO TON LEADER TOU TERM ", args.Term)
+	fmt.Println(": ", rf.me, " ELAVA APPEND APO TON LEADER TOU TERM ", args.Term, "TON ", args.Term, " TO DIKO MOU TERM EINAI ", rf.currentTerm)
 	reply.Term = rf.currentTerm
-	if args.Term <= rf.currentTerm {
-		//step down from being a leader
-		//rf.currentTerm = args.Term
-		//rf.votesFor = -1
-		reply.Term = rf.currentTerm
+	if args.Term < rf.currentTerm {
 		reply.Success = false
 	} else {
 		reply.Success = true
-		//fmt.Println("received heartbeat from leader ")
 		rf.currentTerm = args.Term
 		rf.votesFor = -1
 		if rf.state == 2 {
 			rf.state = 0
+			rf.previousHeartBeatTime = time.Now()
 		}
 		rf.previousHeartBeatTime = time.Now()
-		//rf.persist()
 	}
 }
 
@@ -349,19 +290,12 @@ func (rf *Raft) Kill() {
 }
 
 func (rf *Raft) startServer() {
-	//wait for heartbeats
-
-	//var randomElectionSeed int64
-
-	//var heartbeatsTimer int64
 
 	for {
-		//randomElectionSeed = rand.Int63n(200)
 		//if follower
 		if rf.state == 0 {
 
 			timeSinceLastHeartbeat := time.Now().Sub(rf.previousHeartBeatTime)
-			//fmt.Println(string(timeSinceLastHeartbeat) + " :time")
 			if timeSinceLastHeartbeat > rf.electionTimeOut {
 				rf.mu.Lock()
 				rf.state = 1
@@ -371,22 +305,17 @@ func (rf *Raft) startServer() {
 
 		} else if rf.state == 1 {
 
-			//if (time.Now().UnixNano()/int64(time.Millisecond) - rf.electionStarted) > 600+randomElectionSeed {
-			//fmt.Println(400 * time.Millisecond + time.Millisecond*time.Duration(randomElectionSeed))
-
 			rf.mu.Lock()
-			//rf.electionStarted = time.Now().UnixNano() / int64(time.Millisecond)
 			rf.currentTerm++
 			rf.votesFor = rf.me //vote myself
 			rf.lastTermToVote = rf.currentTerm
-			//fmt.Println("KSEKINAW EKLOGES")
 			rf.mu.Unlock()
 			go startElection(rf)
 			time.Sleep(700 * time.Millisecond)
 
 		} else { // if leader
-			sendHeartBeats(rf)
-			//time.Sleep(50 * time.Millisecond)
+			go sendHeartBeats(rf)
+			time.Sleep(100 * time.Millisecond)
 
 		}
 
@@ -394,9 +323,6 @@ func (rf *Raft) startServer() {
 }
 
 func startElection(rf *Raft) {
-	//rf.mu.Lock()
-	//
-	//rf.mu.Unlock()
 
 	votesNeeded := rf.numberOfPeers / 2 //votes needed except the one rf gives to itself
 	votesReceived := 1                  //myself
@@ -416,26 +342,32 @@ func startElection(rf *Raft) {
 	for i, _ := range rf.peers {
 		var reply RequestVoteReply
 		if i != rf.me {
-			//fmt.Println("PEER SENT ", i)
 			fmt.Println(":", rf.me, " KAI STELNW REQUEST VOTE STON ", i, "GIA TO TERM ", rf.currentTerm)
 			voteStatus := rf.sendRequestVote(i, &args, &reply)
 			if voteStatus == false {
-				//fmt.Println("VOTER IS DOWN")
 			}
 			if reply.VoteGranted { //&& reply.Term == rf.currentTerm {
 				votesReceived++
+				if votesReceived > votesNeeded {
+					break
+				}
 			}
 		}
 
 	}
 	rf.mu.Lock()
 	if votesReceived > votesNeeded {
-		//rf.mu.Lock()
 		rf.state = 2
 		rf.votesFor = -1
-		fmt.Println("NEW LEADER IS: ", rf.me, "STO TERM ", rf.currentTerm)
+		fmt.Println("NEW LEADER IS: ", rf.me, "ME STATE ", rf.state, "STO TERM ", rf.currentTerm)
 		rf.leaderID = rf.me
-		//rf.mu.Unlock()
+	} else {
+		if rf.state == 2 {
+			rf.previousHeartBeatTime = time.Now()
+			rf.votesFor = -1
+			rf.leaderID = -1
+			rf.state = 0
+		}
 	}
 	rf.mu.Unlock()
 }
@@ -449,45 +381,38 @@ func sendHeartBeats(rf *Raft) {
 		Entries:      rf.Log,
 		LeaderCommit: 0}
 
-	//fmt.Println("1")
 	failedVotes := 0
 	for i, _ := range rf.peers {
 		var reply AppendEntriesReply
-		if i != rf.me {
-			//fmt.Println("2")
-			fmt.Println(":", rf.me, " KAI STELNW APPEND STON ", i, "GIA TO TERM ", rf.currentTerm)
+		if i != rf.me && rf.state == 2 {
+			fmt.Println(":", rf.me, "ME STATE: ", rf.state, "KAI STELNW APPEND STON ", i, "GIA TO TERM ", rf.currentTerm, "TIME: ", time.Now())
 			heartbeatStatus := rf.sendAppendEntries(i, &args, &reply)
-			//fmt.Println("3")
 			if heartbeatStatus == false {
-				//fmt.Println("Heartbeat failed")
 				reply.Success = true //not online but do not care
 				failedVotes++
 			}
-			//fmt.Println("4")
 			if reply.Success == false {
 				rf.mu.Lock()
-				//rf.currentTerm = reply.Term
 				rf.votesFor = -1
-				//rf.currentTerm = reply.Term
-				//fmt.Println("egw o ", rf.me, " kanw step down apo leader")
 				rf.state = 0
+				fmt.Println(":", rf.me, "DEN EIMAI LEADER PIA", "TO TERM MOU EINAI ", rf.currentTerm)
+				rf.previousHeartBeatTime = time.Now()
 				rf.leaderID = -1
 				rf.mu.Unlock()
 			}
 		}
-
 	}
-	time.Sleep(2 * time.Second)
-	//fmt.Println("10")
+	//time.Sleep(2 * time.Second)
 	//if you do not have the quorum online, step down from being leader
-	if failedVotes > len(rf.peers)/2 {
-		//fmt.Println("RE MEGALE EISAI KOLOFARDOS POU EMEINES MONOS")
-		rf.mu.Lock()
-		rf.state = 0
-		rf.votesFor = -1
-		rf.leaderID = -1
-		rf.mu.Unlock()
-	}
+	//if failedVotes > len(rf.peers)/2 {
+	//	rf.mu.Lock()
+	//	rf.state = 0
+	//	fmt.Print(":", rf.me, "KANW STEP DOWN APO LEADER TOU TERM ", rf.me, "GIATI OI PERISSOTEROI SERVERS EINAI OFFLINE")
+	//	rf.previousHeartBeatTime = time.Now()
+	//	rf.votesFor = -1
+	//	rf.leaderID = -1
+	//	rf.mu.Unlock()
+	//}
 
 }
 
@@ -526,10 +451,6 @@ func Make(peers []*labrpc.ClientEnd, me int,
 	rf.electionStarted = -1
 	rf.numberOfPeers = len(peers)
 	rf.electionTimeOut = time.Duration(15*(rf.me+1)) * 100 * time.Millisecond
-
-	/*for i, peer := range peers{
-		fmt.Println(p)
-	}*/
 
 	go rf.startServer()
 	// Your initialization code here (2A, 2B, 2C).

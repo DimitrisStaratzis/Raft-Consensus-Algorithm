@@ -48,10 +48,9 @@ func TestReElection2A(t *testing.T) {
 	fmt.Printf("Test (2A): election after network failure ...\n")
 
 	leader1 := cfg.checkOneLeader()
-	fmt.Printf("  ... Passed0\n")
 
+	fmt.Println("SERVER ", leader1, " IS OFFLINE")
 	// if the leader disconnects, a new one should be elected.
-	fmt.Println("SERVER ", leader1, " GOES OFFLINE")
 	cfg.disconnect(leader1)
 	cfg.checkOneLeader()
 	fmt.Printf("  ... Passed1\n")
@@ -59,7 +58,7 @@ func TestReElection2A(t *testing.T) {
 	// if the old leader rejoins, that shouldn't
 	// disturb the old leader.
 	cfg.connect(leader1)
-	fmt.Println("coming back is ", leader1)
+	fmt.Println("SERVER ", leader1, " IS ONLINE AGAIN")
 	leader2 := cfg.checkOneLeader()
 	fmt.Printf("  ... Passed2\n")
 
@@ -67,6 +66,7 @@ func TestReElection2A(t *testing.T) {
 	// be elected.
 	cfg.disconnect(leader2)
 	cfg.disconnect((leader2 + 1) % servers)
+	fmt.Println("LEADERS DISCONNECTED = ", leader2, " and ", (leader2+1)%servers)
 	time.Sleep(2 * RaftElectionTimeout)
 	cfg.checkNoLeader()
 	fmt.Printf("  ... Passed3\n")
@@ -80,7 +80,7 @@ func TestReElection2A(t *testing.T) {
 	cfg.connect(leader2)
 	cfg.checkOneLeader()
 
-	fmt.Printf("  ... Passed\n")
+	fmt.Printf("  ... Passed OLA\n")
 }
 
 func TestBasicAgree2B(t *testing.T) {
