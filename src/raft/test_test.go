@@ -74,8 +74,8 @@ func TestReElection2A(t *testing.T) {
 	// if a quorum arises, it should elect a leader.
 	fmt.Println("SERVER CONNECTED = ", (leader2+1)%servers)
 	cfg.connect((leader2 + 1) % servers)
-	cfg.checkOneLeader()
-	fmt.Printf("  ... Passed4\n")
+	ld := cfg.checkOneLeader()
+	fmt.Println("  ... Passed4 me leader ton: ", ld)
 
 	// re-join of last node shouldn't prevent leader from existing.
 	fmt.Println("LAST SERVER CONNECTED = ", leader2)
