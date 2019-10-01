@@ -194,7 +194,7 @@ func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
 	} else {
 		reply.VoteGranted = false
 	}
-	rf.persist()
+	//rf.persist()
 }
 
 func (rf *Raft) AppendEntries(args *AppendEntriesArgs, reply *AppendEntriesReply) {
@@ -205,13 +205,14 @@ func (rf *Raft) AppendEntries(args *AppendEntriesArgs, reply *AppendEntriesReply
 	reply.Term = rf.currentTerm
 	if args.Term < rf.currentTerm {
 		reply.Success = false
-	} else {
+	} else if args.Term >= rf.currentTerm {
+		//fmt.Print(args.Term, " + ", rf.currentTerm)
 		reply.Success = true
 		rf.currentTerm = args.Term
 		rf.votesFor = -1
 		if rf.state == 2 {
 			rf.state = 0
-			rf.previousHeartBeatTime = time.Now()
+			//	rf.previousHeartBeatTime = time.Now()
 		}
 		rf.previousHeartBeatTime = time.Now()
 	}
@@ -348,9 +349,9 @@ func startElection(rf *Raft) {
 			}
 			if reply.VoteGranted { //&& reply.Term == rf.currentTerm {
 				votesReceived++
-				if votesReceived > votesNeeded {
-					break
-				}
+				//if votesReceived > votesNeeded{
+				//	break
+				//}
 			}
 		}
 
@@ -361,16 +362,38 @@ func startElection(rf *Raft) {
 		rf.votesFor = -1
 		fmt.Println("NEW LEADER IS: ", rf.me, "ME STATE ", rf.state, "STO TERM ", rf.currentTerm)
 		rf.leaderID = rf.me
-	} else {
-		if rf.state == 2 {
-			rf.previousHeartBeatTime = time.Now()
-			rf.votesFor = -1
-			rf.leaderID = -1
-			rf.state = 0
-		}
-	}
+	} //else {
+	//	if rf.state == 2 {
+	//		rf.previousHeartBeatTime = time.Now()
+	//		rf.votesFor = -1
+	//		rf.leaderID = -1
+	//		rf.state = 0
+	//	}
+	//}
 	rf.mu.Unlock()
 }
+
+//for i, _ := range rf.peers {
+//	var reply RequestVoteReply
+//	if i != rf.me {
+//		fmt.Println(":", rf.me, " KAI STELNW REQUEST VOTE STON ", i, "GIA TO TERM ", rf.currentTerm)
+//		voteStatus := rf.sendRequestVote(i, &args, &reply)
+//		if voteStatus == false {
+//		}
+//		if reply.VoteGranted { //&& reply.Term == rf.currentTerm {
+//			votesReceived++
+//			rf.mu.Lock()
+//			if (votesReceived > votesNeeded) && rf.state !=2{
+//				rf.state = 2
+//				rf.votesFor = -1
+//				fmt.Println("NEW LEADER IS: ", rf.me, "ME STATE ", rf.state, "STO TERM ", rf.currentTerm)
+//				rf.leaderID = rf.me
+//			}
+//			rf.mu.Unlock()
+//		}
+//	}
+//
+//}
 
 func sendHeartBeats(rf *Raft) {
 	args := AppendEntriesArgs{
@@ -381,22 +404,25 @@ func sendHeartBeats(rf *Raft) {
 		Entries:      rf.Log,
 		LeaderCommit: 0}
 
-	failedVotes := 0
+	//failedVotes := 0
 	for i, _ := range rf.peers {
 		var reply AppendEntriesReply
 		if i != rf.me && rf.state == 2 {
-			fmt.Println(":", rf.me, "ME STATE: ", rf.state, "KAI STELNW APPEND STON ", i, "GIA TO TERM ", rf.currentTerm, "TIME: ", time.Now())
+			reply.Success = true
+			fmt.Println(":", rf.me, "ME STATE: ", rf.state, "KAI STELNW APPEND STON ", i, "GIA TO TERM ", rf.currentTerm, "TIME: ")
 			heartbeatStatus := rf.sendAppendEntries(i, &args, &reply)
 			if heartbeatStatus == false {
-				reply.Success = true //not online but do not care
-				failedVotes++
+				//reply.Success = true //not online but do not care
+				//failedVotes++
+
 			}
 			if reply.Success == false {
 				rf.mu.Lock()
 				rf.votesFor = -1
 				rf.state = 0
-				fmt.Println(":", rf.me, "DEN EIMAI LEADER PIA", "TO TERM MOU EINAI ", rf.currentTerm)
+				fmt.Println(":", rf.me, "DEN EIMAI LEADER PIA", "TO TERM MOU EINAI ", rf.currentTerm, "KAPOIOS EIXE TERM: ", reply.Term)
 				rf.previousHeartBeatTime = time.Now()
+				//rf.currentTerm = reply.Term
 				rf.leaderID = -1
 				rf.mu.Unlock()
 			}
