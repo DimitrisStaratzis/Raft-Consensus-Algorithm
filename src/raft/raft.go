@@ -205,11 +205,11 @@ func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
 func (rf *Raft) AppendEntries(args *AppendEntriesArgs, reply *AppendEntriesReply) {
 	// Your code here (2A, 2B).
 	rf.mu.Lock()
+	defer rf.mu.Unlock()
 	fmt.Println(": ", rf.me, " ELAVA APPEND APO TON LEADER TOU TERM ", args.Term, "TON ", args.Term, " TO DIKO MOU TERM EINAI ", rf.currentTerm)
 	reply.Term = rf.currentTerm
 	if args.Term < rf.currentTerm {
 		reply.Success = false
-		rf.mu.Unlock()
 	} else if args.Term >= rf.currentTerm {
 		//fmt.Print(args.Term, " + ", rf.currentTerm)
 		reply.Success = true
@@ -220,7 +220,6 @@ func (rf *Raft) AppendEntries(args *AppendEntriesArgs, reply *AppendEntriesReply
 			//	rf.previousHeartBeatTime = time.Now()
 		}
 		rf.previousHeartBeatTime = time.Now()
-		rf.mu.Unlock()
 	}
 }
 
@@ -300,29 +299,27 @@ func (rf *Raft) startServer() {
 
 	for {
 		//if follower
-		rf.mu.Lock()
 		if rf.state == 0 {
+
 			timeSinceLastHeartbeat := time.Now().Sub(rf.previousHeartBeatTime)
 			if timeSinceLastHeartbeat > rf.electionTimeOut {
-				//rf.mu.Lock()
+				rf.mu.Lock()
 				rf.state = 1
 				fmt.Println(":", rf.me, "--------------EKANA TMT KAI KANW EKLOGES GIA TO TERM ", rf.currentTerm+1)
-				//rf.mu.Unlock()
+				rf.mu.Unlock()
 			}
-			rf.mu.Unlock()
 
 		} else if rf.state == 1 {
-			//rf.mu.Lock()
+
+			rf.mu.Lock()
 			rf.currentTerm++
 			rf.votesFor = -1 //vote myself
 			rf.lastTermToVote = rf.currentTerm
-			//rf.mu.Unlock()
 			rf.mu.Unlock()
 			startElection(rf)
 			//time.Sleep((600 +time.Duration(rand.Intn(200))) * time.Millisecond)
 			time.Sleep(600 * time.Millisecond)
 		} else { // if leader
-			rf.mu.Unlock()
 			sendHeartBeats(rf)
 			time.Sleep(100 * time.Millisecond)
 
