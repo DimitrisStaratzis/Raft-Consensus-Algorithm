@@ -73,6 +73,9 @@ type Raft struct {
 	electionTimeOut       time.Duration
 	applyChan             chan ApplyMsg
 	Log                   []LogEntry
+	emptyLog              []LogEntry
+	nextIndex             []int
+	matchIndex            []int
 	currentTerm           int
 	votesFor              int //index
 	commitIndex           int
@@ -191,6 +194,7 @@ func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
 			rf.lastTermToVote = args.Term
 			rf.currentTerm = args.Term
 			rf.votesFor = args.CandidateID
+			rf.previousHeartBeatTime = time.Now()
 			reply.Term = rf.currentTerm
 			fmt.Println(" ton ", args.CandidateID)
 
@@ -211,6 +215,14 @@ func (rf *Raft) AppendEntries(args *AppendEntriesArgs, reply *AppendEntriesReply
 	//defer rf.mu.Unlock()
 	fmt.Println(": ", rf.me, " ELAVA APPEND APO TON LEADER TOU TERM ", args.Term, "TON ", args.Term, " TO DIKO MOU TERM EINAI ", rf.currentTerm)
 	reply.Term = rf.currentTerm
+
+	if len(rf.Log) > args.PrevLogIndex && args.PrevLogIndex >= 0 {
+		if rf.Log[args.PrevLogIndex].Term != args.PrevLogTerm {
+			reply.Success = false
+			rf.mu.Unlock()
+		}
+	}
+
 	if args.Term < rf.currentTerm {
 		reply.Success = false
 		rf.mu.Unlock()
@@ -226,6 +238,7 @@ func (rf *Raft) AppendEntries(args *AppendEntriesArgs, reply *AppendEntriesReply
 		rf.previousHeartBeatTime = time.Now()
 		rf.mu.Unlock()
 	}
+
 }
 
 //
@@ -283,12 +296,59 @@ func (rf *Raft) sendAppendEntries(server int, args *AppendEntriesArgs, reply *Ap
 func (rf *Raft) Start(command interface{}) (int, int, bool) {
 	index := -1
 	term := -1
-	isLeader := true
+	//isLeader := true
+
+	rf.mu.Lock()
+	if rf.state != 2 {
+		return index, term, false
+	}
 
 	// Your code here (2B).
+	var logentry LogEntry
+	logentry.Command = command
+	logentry.Term = rf.currentTerm
+	index = len(rf.Log) // not -1 because it will increase
+	rf.Log = append(rf.Log, logentry)
+	rf.mu.Unlock()
+	//sendAppendEntriesToReplicateLog(rf)
 
-	return index, term, isLeader
+	return index, rf.currentTerm, true
 }
+
+//func sendAppendEntriesToReplicateLog(rf *Raft) {
+//	rf.mu.Lock()
+//	args := AppendEntriesArgs{
+//		Term:         rf.currentTerm,
+//		LeaderId:     rf.me,
+//		PrevLogIndex: 0,
+//		PrevLogTerm:  0,
+//		Entries:      rf.Log,
+//		LeaderCommit: 0}
+//	rf.mu.Unlock()
+//
+//	var reply AppendEntriesReply
+//
+//	for i, _ := range rf.peers {
+//		rf.mu.Lock()
+//		if i != rf.me && rf.state == 2 {
+//			rf.mu.Unlock()
+//			go func(i int, args AppendEntriesArgs, reply AppendEntriesReply) {
+//				//fmt.Println()
+//				if rf.sendAppendEntries(i, &args, &reply) {
+//					if reply.Success == false {
+//						rf.mu.Lock()
+//
+//						rf.mu.Unlock()
+//					}
+//				} else {
+//					//	fmt.Println(rf.me, " Error in AppendEntries RPC to ", i)
+//				}
+//			}(i, args, reply)
+//		} else {
+//			rf.mu.Unlock()
+//		}
+//	}
+//}
 
 //
 // the tester calls Kill() when a Raft instance won't
@@ -300,7 +360,7 @@ func (rf *Raft) Kill() {
 	// Your code here, if desired.
 }
 
-func (rf *Raft) startServer() {
+func (rf *Raft) runServer() {
 
 	for {
 		rf.mu.Lock()
@@ -324,7 +384,7 @@ func (rf *Raft) startServer() {
 			startElection(rf)
 		} else { // if leader
 			rf.mu.Unlock()
-			sendHeartBeats(rf)
+			sendAppendEntries(rf)
 			time.Sleep(100 * time.Millisecond)
 
 		}
@@ -386,6 +446,12 @@ func startElection(rf *Raft) {
 			//rf.mu.Lock()
 			if votesReceived > votesNeeded {
 				rf.mu.Lock()
+				//reinitiallize arrays
+				rf.nextIndex = make([]int, len(rf.peers))
+				rf.matchIndex = make([]int, len(rf.peers))
+				for j, _ := range rf.peers {
+					rf.nextIndex[j] = len(rf.Log) - 1
+				}
 				rf.state = 2
 				rf.votesFor = -1
 				fmt.Println("NEW LEADER IS: ", rf.me, "ME STATE ", rf.state, "STO TERM ", rf.currentTerm)
@@ -409,21 +475,33 @@ func startElection(rf *Raft) {
 	}
 }
 
-func sendHeartBeats(rf *Raft) {
+func sendAppendEntries(rf *Raft) {
 	rf.mu.Lock()
 	args := AppendEntriesArgs{
 		Term:         rf.currentTerm,
 		LeaderId:     rf.me,
-		PrevLogIndex: 0, //todo se all the entries below again
+		PrevLogIndex: 0, //rf.nextIndex[i] - 1,
 		PrevLogTerm:  0,
-		Entries:      rf.Log,
-		LeaderCommit: 0}
+		Entries:      rf.emptyLog,
+		LeaderCommit: rf.commitIndex}
+
 	rf.mu.Unlock()
 	var reply AppendEntriesReply
 	for i, _ := range rf.peers {
 		rf.mu.Lock()
 		if i != rf.me && rf.state == 2 {
+
+			//args complete
+			args.PrevLogIndex = rf.nextIndex[i] - 1
+			if rf.nextIndex[i]-1 >= 0 && rf.nextIndex[i]-1 < len(rf.Log) {
+				args.PrevLogTerm = rf.Log[rf.nextIndex[i]-1].Term
+			}
+
+			if len(rf.Log)-1 > rf.nextIndex[i] {
+				args.Entries = rf.Log[rf.nextIndex[i]:]
+			}
 			rf.mu.Unlock()
+
 			go func(i int, args AppendEntriesArgs, reply AppendEntriesReply) {
 				fmt.Println(":", rf.me, "ME STATE: ", rf.state, "KAI STELNW APPEND STON ", i, "GIA TO TERM ", rf.currentTerm, "TIME: ")
 				if rf.sendAppendEntries(i, &args, &reply) {
@@ -490,7 +568,7 @@ func Make(peers []*labrpc.ClientEnd, me int,
 	maxElection := 450
 	rf.electionTimeOut = time.Duration(rand.Intn(maxElection-minElection)+minElection) * time.Millisecond
 
-	go rf.startServer()
+	go rf.runServer()
 	// Your initialization code here (2A, 2B, 2C).
 
 	// initialize from state persisted before a crash
