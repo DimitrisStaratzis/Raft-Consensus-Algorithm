@@ -98,8 +98,8 @@ func TestBasicAgree2B(t *testing.T) {
 		if nd > 0 {
 			t.Fatalf("some have committed before Start()")
 		}
-
 		xindex := cfg.one(index*100, servers)
+		//fmt.Println(" MPHKA")
 		if xindex != index {
 			t.Fatalf("got index %v but expected %v", xindex, index)
 		}
@@ -136,7 +136,7 @@ func TestFailAgree2B(t *testing.T) {
 	time.Sleep(RaftElectionTimeout)
 	cfg.one(107, servers)
 
-	fmt.Printf("  ... Passed\n")
+	fmt.Printf("  ... Passed2\n")
 }
 
 func TestFailNoAgree2B(t *testing.T) {
@@ -188,7 +188,7 @@ func TestFailNoAgree2B(t *testing.T) {
 
 	cfg.one(1000, servers)
 
-	fmt.Printf("  ... Passed\n")
+	fmt.Printf("  ... Passed3\n")
 }
 
 func TestConcurrentStarts2B(t *testing.T) {
@@ -289,7 +289,7 @@ loop:
 		t.Fatalf("term changed too often")
 	}
 
-	fmt.Printf("  ... Passed\n")
+	fmt.Printf("  ... Passed4\n")
 }
 
 func TestRejoin2B(t *testing.T) {
@@ -327,7 +327,7 @@ func TestRejoin2B(t *testing.T) {
 
 	cfg.one(105, servers)
 
-	fmt.Printf("  ... Passed\n")
+	fmt.Printf("  ... Passed5\n")
 }
 
 func TestBackup2B(t *testing.T) {
@@ -399,7 +399,7 @@ func TestBackup2B(t *testing.T) {
 	}
 	cfg.one(rand.Int(), servers)
 
-	fmt.Printf("  ... Passed\n")
+	fmt.Printf("  ... Passed6\n")
 }
 
 func TestCount2B(t *testing.T) {
@@ -509,7 +509,7 @@ loop:
 		t.Fatalf("too many RPCs (%v) for 1 second of idleness\n", total3-total2)
 	}
 
-	fmt.Printf("  ... Passed\n")
+	fmt.Printf("  ... Passed7\n")
 }
 
 func TestPersist12C(t *testing.T) {
