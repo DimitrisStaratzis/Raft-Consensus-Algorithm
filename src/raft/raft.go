@@ -521,7 +521,7 @@ func (rf *Raft) Start(command interface{}) (int, int, bool) {
 	logentry.Command = command
 	logentry.Term = rf.currentTerm
 	index = len(rf.Log) // not -1 because it will increase
-	fmt.Println("ENTRY ADDED: ", logentry)
+	fmt.Println("ENTRY ADDED: ===============================================================================================", logentry)
 	rf.Log = append(rf.Log, logentry)
 	//rf.mu.Unlock()
 	//sendAppendEntriesToReplicateLog(rf)
@@ -663,20 +663,17 @@ func startElection(rf *Raft) {
 }
 
 func sendAppendEntries(rf *Raft) {
-	rf.mu.Lock()
-	args := AppendEntriesArgs{
-		Term:         rf.currentTerm,
-		LeaderId:     rf.me,
-		PrevLogIndex: 0, //rf.nextIndex[i] - 1,
-		PrevLogTerm:  0,
-		Entries:      rf.emptyLog,
-		LeaderCommit: rf.commitIndex}
-
-	rf.mu.Unlock()
-	var reply AppendEntriesReply
 	for i, _ := range rf.peers {
 		rf.mu.Lock()
 		if i != rf.me && rf.state == 2 {
+			args := AppendEntriesArgs{
+				Term:         rf.currentTerm,
+				LeaderId:     rf.me,
+				PrevLogIndex: 0, //rf.nextIndex[i] - 1,
+				PrevLogTerm:  0,
+				Entries:      rf.emptyLog,
+				LeaderCommit: rf.commitIndex}
+			var reply AppendEntriesReply
 			//fmt.Println("MEGETHOS0: ", len(rf.Log), len(rf.Log)-1,  ">=",  rf.nextIndex[i])
 			//fmt.Println("MEGETHOS: ", len(rf.Log))
 			//args complete
