@@ -22,6 +22,10 @@ import (
 	//"math/rand"
 
 	"fmt"
+	//"fmt"
+	//"fmt"
+	//"fmt"
+	//"fmt"
 	"math/rand"
 
 	//"log"
@@ -169,54 +173,73 @@ type AppendEntriesArgs struct {
 }
 
 type AppendEntriesReply struct {
-	Term         int
-	Success      bool
-	NextTryIndex int
+	Term       int
+	Success    bool
+	difference int
 }
 
 //example RequestVote RPC handler.
+
+//func (rf *Raft) isUpToDate(cIndex int, cTerm int) bool {
+//	term, index := rf.getLastTerm(), rf.getLastIndex()
+//
+//	if cTerm != term {
+//		return cTerm >= term
+//	}
+//
+//	return cIndex >= index
+//}
 
 func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
 	// Your code here (2A, 2B).
 	rf.mu.Lock()
 	defer rf.mu.Unlock()
+	// Do not grant vote if term < currentTerm
+	if args.Term < rf.currentTerm {
+		reply.VoteGranted = false
+		reply.Term = rf.currentTerm
+		return
+	}
+
 	if rf.currentTerm < args.Term {
+		rf.currentTerm = args.Term
+		rf.state = 0
 		rf.votesFor = -1
 	}
-	fmt.Println(": ", rf.me, " -----------------ELAVA REQUEST VOTE APO TON ", args.CandidateID, " GIA TO TERM ", args.Term, " votes for = ", rf.votesFor)
-	if (rf.votesFor == -1) || (rf.votesFor == args.CandidateID) { // if server has not voted yet
-		if rf.currentTerm < args.Term && len(rf.Log)-1 <= args.LastLogIndex {
-			if len(rf.Log) > 0 {
-				if rf.Log[len(rf.Log)-1].Term <= args.Term {
-					fmt.Println(": ", rf.me, " Psifizw sto term: ", args.Term, " ton ", args.CandidateID)
-					reply.VoteGranted = true
-					rf.lastTermToVote = args.Term
-					rf.currentTerm = args.Term
-					rf.votesFor = args.CandidateID
-					rf.previousHeartBeatTime = time.Now()
-					reply.Term = rf.currentTerm
-					//fmt.Print(" ton ", args.CandidateID)
-				}
-			} else {
-				fmt.Println(": ", rf.me, " Psifizw sto term: ", args.Term, " ton ", args.CandidateID)
-				reply.VoteGranted = true
-				rf.lastTermToVote = args.Term
-				rf.currentTerm = args.Term
-				rf.votesFor = args.CandidateID
-				rf.previousHeartBeatTime = time.Now()
-				reply.Term = rf.currentTerm
-				//fmt.Print(" ton ", args.CandidateID)
-			}
+	reply.Term = rf.currentTerm
+	//fmt.Println(": ", rf.me, " -----------------ELAVA REQUEST VOTE APO TON ", args.CandidateID, " GIA TO TERM ", args.Term, " votes for = ", rf.votesFor)
+	if ((rf.votesFor == -1) || (rf.votesFor == args.CandidateID)) && candidateLogIsUpToDate(args, rf) { // if server has not voted yet
+		//fmt.Println(": ", rf.me, " Psifizw sto term: ", args.Term, " ton ", args.CandidateID)
+		reply.VoteGranted = true
+		rf.lastTermToVote = args.Term
+		rf.currentTerm = args.Term
+		rf.votesFor = args.CandidateID
+		//rf.previousHeartBeatTime = time.Now()
 
-		} else {
-			fmt.Println(": ", rf.me, " den psifizw sto term: ", args.Term, " ton ", args.CandidateID)
-			reply.VoteGranted = false
+		////fmt.Print(" ton ", args.CandidateID)
 
-		}
+		//} else {
+		//	//fmt.Println(": ", rf.me, " den psifizw sto term: ", args.Term, " ton ", args.CandidateID)
+		//	reply.VoteGranted = false
+		//
+		//}
 	} else {
+		//fmt.Println(": ", rf.me, " den psifizw sto term: ", args.Term, " ton ", args.CandidateID)
 		reply.VoteGranted = false
 	}
 	//rf.persist()
+}
+
+func candidateLogIsUpToDate(args *RequestVoteArgs, rf *Raft) bool {
+	if len(rf.Log) > 0 {
+		if rf.Log[len(rf.Log)-1].Term != args.LastLogTerm {
+			return args.LastLogTerm > rf.Log[len(rf.Log)-1].Term
+		} else {
+			return args.LastLogIndex >= len(rf.Log)-1
+		}
+	}
+	return true
+
 }
 
 func min(x int, y int) int {
@@ -230,8 +253,8 @@ func min(x int, y int) int {
 
  */
 func thereIsConflict(raft *Raft, leaderLogs []LogEntry, myLogs []LogEntry) bool {
-	for i := range leaderLogs {
-		if i >= len(myLogs) {
+	for i := range myLogs {
+		if i == len(leaderLogs) {
 			break
 		}
 		if leaderLogs[i].Term != myLogs[i].Term {
@@ -243,6 +266,7 @@ func thereIsConflict(raft *Raft, leaderLogs []LogEntry, myLogs []LogEntry) bool 
 
 func (rf *Raft) AppendEntries(args *AppendEntriesArgs, reply *AppendEntriesReply) {
 	// Your code here (2A, 2B).
+	//leaderCommit := args.LeaderCommit
 	rf.mu.Lock()
 	//defer rf.mu.Unlock()
 	//fmt.Println(": ", rf.me, " ELAVA APPEND APO TON LEADER TOU TERM ", args.Term, "TON ", args.LeaderId, " TO DIKO MOU TERM EINAI ", rf.currentTerm, "KAI TO LOGARG EINAI ", args.Entries)
@@ -256,7 +280,6 @@ func (rf *Raft) AppendEntries(args *AppendEntriesArgs, reply *AppendEntriesReply
 		rf.currentTerm = args.Term
 		rf.votesFor = -1
 		rf.state = 0
-		//rf.previousHeartBeatTime = time.Now()
 		rf.previousHeartBeatTime = time.Now()
 
 		//if args.PrevLogIndex > len(rf.Log)-1 {
@@ -268,42 +291,44 @@ func (rf *Raft) AppendEntries(args *AppendEntriesArgs, reply *AppendEntriesReply
 		//	return
 		//}
 		//if not a heartbeat
-		//fmt.Println(len(rf.Log) >= args.PrevLogIndex, " + ", args.PrevLogIndex >= 0, " + ", len(args.Entries)>0)
+		////fmt.Println(len(rf.Log) >= args.PrevLogIndex, " + ", args.PrevLogIndex >= 0, " + ", len(args.Entries)>0)
 
 		if args.PrevLogIndex > len(rf.Log)-1 {
 			reply.Success = false
+			rf.mu.Unlock()
 			return
 		}
 
 		if args.PrevLogIndex > 0 {
-			//fmt.Println("to index einai: ", args.PrevLogIndex, "kai to megethos einai: ",len(rf.Log))
+			////fmt.Println("to index einai: ", args.PrevLogIndex, "kai to megethos einai: ",len(rf.Log))
 			if rf.Log[args.PrevLogIndex].Term != args.PrevLogTerm {
 				//
-				//fmt.Println(": ", rf.me, " DEN EXOUN KOINH VASH TA LOGS MOY ME TOY LEADER  ", args.LeaderId)
+				////fmt.Println(": ", rf.me, " DEN EXOUN KOINH VASH TA LOGS MOY ME TOY LEADER  ", args.LeaderId)
 				reply.Success = false
+				rf.mu.Unlock()
 				//rf.mu.Unlock()
 				return
 			}
 		}
 
-		fmt.Println("\n\n\n\n\n: ", rf.me, " TO PALIO MOU LOG EINAI: ")
+		////fmt.Println("\n\n\n\n\n: ", rf.me, " TO PALIO MOU LOG EINAI: ")
 		for i := 0; i < len(rf.Log); i++ {
-			fmt.Println("			", rf.Log[i], " ENTRY")
+			//fmt.Println("			", rf.Log[i], " ENTRY")
 		}
 
-		fmt.Println(": ", rf.me, " MOU ESTEILAN TO LOG: me prevlogindex :", args.PrevLogIndex)
+		////fmt.Println(": ", rf.me, " MOU ESTEILAN TO LOG: me prevlogindex :", args.PrevLogIndex)
 		for i := 0; i < len(args.Entries); i++ {
-			fmt.Println("			", args.Entries[i], " ENTRY")
+			//fmt.Println("			", args.Entries[i], " ENTRY")
 		}
 		//If an existing entry conflicts with a new one (same index
 		//but different terms), delete the existing entry and all that
 		//follow it
-		//fmt.Println(":", rf.me, " I COMMITED THE ENTRIES FROM LEADER: ", args.LeaderId)
+		////fmt.Println(":", rf.me, " I COMMITED THE ENTRIES FROM LEADER: ", args.LeaderId)
 		//reply.Success = true// we will fix everything dont worry
 		//if len(rf.Log) > 0{
 		logsToCompare := rf.Log[args.PrevLogIndex+1:]
 		if thereIsConflict(rf, args.Entries, logsToCompare) || len(logsToCompare) < len(args.Entries) {
-			//fmt.Println("EIXAME CONFLICT")
+			////fmt.Println("EIXAME CONFLICT")
 			rf.Log = rf.Log[:args.PrevLogIndex+1]
 			rf.Log = append(rf.Log, args.Entries...)
 		} else {
@@ -313,19 +338,21 @@ func (rf *Raft) AppendEntries(args *AppendEntriesArgs, reply *AppendEntriesReply
 		//	rf.Log = append(rf.Log, args.Entries...)
 		//}
 
-		fmt.Println(": ", rf.me, " TO NEO MOU LOG EINAI: ")
+		////fmt.Println(": ", rf.me, " TO NEO MOU LOG EINAI: ")
 		for i := 0; i < len(rf.Log); i++ {
-			fmt.Println("			", rf.Log[i], " ENTRY")
+			//fmt.Println("			", rf.Log[i], " ENTRY")
 		}
-		rf.previousHeartBeatTime = time.Now()
+		//rf.previousHeartBeatTime = time.Now()
 
 		//If leaderCommit > commitIndex, set commitIndex =
 		//min(leaderCommit, index of last new entry)
 		if args.LeaderCommit > rf.commitIndex {
+
 			rf.commitIndex = min(args.LeaderCommit, len(rf.Log)-1)
 			//send commited changes to apply channel
-			fmt.Println(": ", rf.me, " THA KANW COMMIT APO TO ", rf.lastApplied, " MEXRI TO ", rf.commitIndex)
+			//fmt.Println(": ", rf.me, " THA KANW COMMIT APO TO ", rf.lastApplied, " MEXRI TO ", rf.commitIndex)
 			go func(rf *Raft) {
+				rf.mu.Lock()
 				for i := rf.lastApplied + 1; i <= rf.commitIndex; i++ {
 					var applymsg ApplyMsg
 					applymsg.Index = i
@@ -333,6 +360,7 @@ func (rf *Raft) AppendEntries(args *AppendEntriesArgs, reply *AppendEntriesReply
 					rf.applyChan <- applymsg
 				}
 				rf.lastApplied = rf.commitIndex
+				rf.mu.Unlock()
 			}(rf)
 
 		}
@@ -391,11 +419,11 @@ func (rf *Raft) sendAppendEntries(server int, args *AppendEntriesArgs, reply *Ap
 		if reply.Term > rf.currentTerm {
 			//rf.mu.Lock()
 			rf.votesFor = -1
-			fmt.Println("EIMAI LEADER KAI EGINA FOLLOWER ------------------------------------------------")
+			////fmt.Println("EIMAI LEADER KAI EGINA FOLLOWER ------------------------------------------------")
 			rf.state = 0
-			////fmt.Println(":", rf.me, "DEN EIMAI LEADER PIA", "TO TERM MOU EINAI ", rf.currentTerm, "KAPOIOS EIXE TERM: ", reply.Term)
-			rf.previousHeartBeatTime = time.Now()
-			//rf.currentTerm = reply.Term
+			//////fmt.Println(":", rf.me, "DEN EIMAI LEADER PIA", "TO TERM MOU EINAI ", rf.currentTerm, "KAPOIOS EIXE TERM: ", reply.Term)
+			rf.previousHeartBeatTime = time.Now() //todo ksanades to
+			rf.currentTerm = reply.Term
 			rf.leaderID = -1
 			return ok
 			//rf.mu.Unlock()
@@ -404,9 +432,12 @@ func (rf *Raft) sendAppendEntries(server int, args *AppendEntriesArgs, reply *Ap
 		if reply.Success {
 			rf.matchIndex[server] = args.PrevLogIndex + len(args.Entries)
 			rf.nextIndex[server] = rf.matchIndex[server] + 1
-			//fmt.Println("MPHKA")
+			////fmt.Println("MPHKA")
 		} else { //if args.Term >= rf.currentTerm && len(args.Entries)>0{
-			rf.nextIndex[server]--
+			if rf.nextIndex[server] > 0 {
+				rf.nextIndex[server]--
+				//fmt.Println("XAXA")
+			}
 		}
 		//count if majority commited my entries
 		for N := len(rf.Log) - 1; rf.commitIndex < N; N-- {
@@ -419,16 +450,21 @@ func (rf *Raft) sendAppendEntries(server int, args *AppendEntriesArgs, reply *Ap
 					}
 				}
 			}
-			fmt.Println("EXOUN TO LOG MOU: ", count, " ENW THA EPREPE ", (len(rf.peers)/2)+1)
+			//fmt.Println("EXOUN TO LOG MOU: ", count, " ENW THA EPREPE ", (len(rf.peers)/2)+1)
 			if count > len(rf.peers)/2 {
 				rf.commitIndex = N
 				//commit logs
-				fmt.Println(":", rf.me, " KANW COMMIT ENTRIES MEXRI TO: ", rf.commitIndex)
+				//fmt.Println(":", rf.me, " KANW COMMIT ENTRIES MEXRI TO: ", rf.commitIndex)
 				go func(rf *Raft) {
+					rf.mu.Lock()
 					for i := rf.lastApplied + 1; i <= rf.commitIndex; i++ {
-						rf.applyChan <- ApplyMsg{Index: i, Command: rf.Log[i].Command}
+						var applymsg ApplyMsg
+						applymsg.Index = i
+						applymsg.Command = rf.Log[i].Command
+						rf.applyChan <- applymsg
 					}
 					rf.lastApplied = rf.commitIndex
+					rf.mu.Unlock()
 				}(rf)
 				break
 			}
@@ -442,9 +478,9 @@ func (rf *Raft) sendAppendEntries(server int, args *AppendEntriesArgs, reply *Ap
 	//		if reply.Success==false{
 	//			rf.mu.Lock()
 	//			rf.votesFor = -1
-	//			fmt.Println("EIMAI LEADER KAI EGINA FOLLOWER ------------------------------------------------")
+	//			//fmt.Println("EIMAI LEADER KAI EGINA FOLLOWER ------------------------------------------------")
 	//			rf.state = 0
-	//			////fmt.Println(":", rf.me, "DEN EIMAI LEADER PIA", "TO TERM MOU EINAI ", rf.currentTerm, "KAPOIOS EIXE TERM: ", reply.Term)
+	//			//////fmt.Println(":", rf.me, "DEN EIMAI LEADER PIA", "TO TERM MOU EINAI ", rf.currentTerm, "KAPOIOS EIXE TERM: ", reply.Term)
 	//			rf.previousHeartBeatTime = time.Now()
 	//			//rf.currentTerm = reply.Term
 	//			rf.leaderID = -1
@@ -455,13 +491,13 @@ func (rf *Raft) sendAppendEntries(server int, args *AppendEntriesArgs, reply *Ap
 	//		if reply.Success{
 	//			rf.matchIndex[server] = args.PrevLogIndex + len(args.Entries)
 	//			rf.nextIndex[server] = rf.matchIndex[server] + 1
-	//			//fmt.Println("MPHKA")
+	//			////fmt.Println("MPHKA")
 	//		}else {//if args.Term >= rf.currentTerm && len(args.Entries)>0{
 	//			rf.nextIndex[server]--
 	//		}
 	//		//count if majority commited my entries
 	//		for N := len(rf.Log)-1; rf.commitIndex < N; N-- {
-	//			fmt.Println("MPHKA")
+	//			//fmt.Println("MPHKA")
 	//			count := 1
 	//
 	//			if rf.Log[N].Term == rf.currentTerm {
@@ -471,11 +507,11 @@ func (rf *Raft) sendAppendEntries(server int, args *AppendEntriesArgs, reply *Ap
 	//					}
 	//				}
 	//			}
-	//			fmt.Println("EXOUN TO LOG MOU: ", count, " ENW THA EPREPE ", len(rf.peers)/2)
+	//			//fmt.Println("EXOUN TO LOG MOU: ", count, " ENW THA EPREPE ", len(rf.peers)/2)
 	//			if count > len(rf.peers) / 2 {
 	//				rf.commitIndex = N
 	//				//commit logs
-	//				fmt.Println(":", rf.me, " KANW COMMIT ENTRIES MEXRI TO: ", rf.commitIndex)
+	//				//fmt.Println(":", rf.me, " KANW COMMIT ENTRIES MEXRI TO: ", rf.commitIndex)
 	//				go func(rf *Raft) {
 	//					for i := rf.lastApplied +1; i <= rf.commitIndex; i++ {
 	//						rf.applyChan <- ApplyMsg{Index: i, Command: rf.Log[i].Command}
@@ -507,8 +543,8 @@ func (rf *Raft) Start(command interface{}) (int, int, bool) {
 	rf.mu.Lock()
 	defer rf.mu.Unlock()
 
-	index := -1
-	term := -1
+	index := 0
+	term := 0
 	//isLeader := true
 
 	//rf.mu.Lock()
@@ -521,13 +557,13 @@ func (rf *Raft) Start(command interface{}) (int, int, bool) {
 	logentry.Command = command
 	logentry.Term = rf.currentTerm
 	index = len(rf.Log) // not -1 because it will increase
-	fmt.Println("ENTRY ADDED: ===============================================================================================", logentry)
+	//fmt.Println("ENTRY ADDED: ===============================================================================================", logentry)
 	rf.Log = append(rf.Log, logentry)
 	//rf.mu.Unlock()
 	//sendAppendEntriesToReplicateLog(rf)
-	fmt.Println("LEADER WAS ASKED FROM CLIENT TO EXECUTE COMMAND. LEADER HAS NOW LOG SIZE: ", len(rf.Log))
+	//fmt.Println("LEADER, " ,rf.me," WAS ASKED FROM CLIENT TO EXECUTE COMMAND. LEADER HAS NOW LOG SIZE: ", len(rf.Log))
 	for i := 0; i < len(rf.Log); i++ {
-		fmt.Println("			", rf.Log[i], " ENTRY")
+		//fmt.Println("			", rf.Log[i], " ENTRY")
 	}
 	term = rf.currentTerm
 	//rf.mu.Unlock()
@@ -553,10 +589,11 @@ func (rf *Raft) runServer() {
 		if state == 0 {
 			rf.mu.Lock()
 			timeSinceLastHeartbeat := time.Now().Sub(rf.previousHeartBeatTime)
-			if timeSinceLastHeartbeat > rf.heartBeatTimeOut {
+			if timeSinceLastHeartbeat > rf.generateRandomTimeOut(600, 1) {
+				//fmt.Println(timeSinceLastHeartbeat, " XAXA")
 				//rf.mu.Lock()
 				rf.state = 1
-				fmt.Println(":", rf.me, "--------------EKANA TMT KAI KANW EKLOGES GIA TO TERM ", rf.currentTerm+1)
+				//fmt.Println(":", rf.me, "--------------EKANA TMT KAI KANW EKLOGES GIA TO TERM ", rf.currentTerm+1)
 				rf.mu.Unlock()
 			} else {
 				rf.mu.Unlock()
@@ -565,7 +602,7 @@ func (rf *Raft) runServer() {
 		} else if state == 1 {
 			rf.mu.Lock()
 			rf.currentTerm++
-			rf.votesFor = -1 //vote myself
+			rf.votesFor = rf.me //vote myself
 			rf.lastTermToVote = rf.currentTerm
 			rf.mu.Unlock()
 			startElection(rf)
@@ -579,44 +616,54 @@ func (rf *Raft) runServer() {
 }
 
 func startElection(rf *Raft) {
-	////fmt.Println("---------------------------------------------------------------------------------EXOUME EKLOGES GIA TO TERM: ", rf.currentTerm, " APO TON: ", rf.me, " ME STATE: ", rf.state)
+	//////fmt.Println("---------------------------------------------------------------------------------EXOUME EKLOGES GIA TO TERM: ", rf.currentTerm, " APO TON: ", rf.me, " ME STATE: ", rf.state)
 
-	rf.mu.Lock()
-	votesNeeded := rf.numberOfPeers / 2 //votes needed except the one rf gives to itself
-	votesReceived := 1                  //myself
-	lastLogIndex := len(rf.Log) - 1
-
-	var args = RequestVoteArgs{}
-	newVote := make(chan bool)
+	//rf.mu.Lock()
 	VOTING_NOW := true
-	var reply RequestVoteReply
-	rf.startedElection = time.Now()
-
-	args.Term = rf.currentTerm
-	args.CandidateID = rf.me
-	if lastLogIndex == -1 {
-		args.LastLogIndex = 0
-		args.LastLogTerm = 0
-	} else {
-		args.LastLogIndex = lastLogIndex
-		args.LastLogTerm = rf.Log[lastLogIndex].Term
-	}
-	rf.mu.Unlock()
+	votesNeeded := rf.numberOfPeers / 2
+	votesReceived := 1
+	newVote := make(chan bool)
+	//rf.mu.Unlock()
 
 	for i, _ := range rf.peers {
 		rf.mu.Lock()
 		if i != rf.me && rf.state == 1 {
-			rf.mu.Unlock()
+
+			//votes needed except the one rf gives to itself
+			//myself
+			lastLogIndex := len(rf.Log) - 1
+
+			var args = RequestVoteArgs{}
+			var reply RequestVoteReply
+
+			rf.startedElection = time.Now()
+
+			args.Term = rf.currentTerm
+			args.CandidateID = rf.me
+
+			if lastLogIndex == -1 {
+				args.LastLogIndex = 0
+				args.LastLogTerm = 0
+			} else {
+				args.LastLogIndex = lastLogIndex
+				args.LastLogTerm = rf.Log[lastLogIndex].Term
+			}
+
 			go func(i int, args RequestVoteArgs, reply RequestVoteReply, newVote chan bool) {
-				////fmt.Println(":", rf.me, " KAI STELNW REQUEST VOTE STON ", i, "GIA TO TERM ", rf.currentTerm)
+				//fmt.Println(":", rf.me, " KAI STELNW REQUEST VOTE STON ", i, "GIA TO TERM ", rf.currentTerm)
 				if rf.sendRequestVote(i, &args, &reply) {
 					//time.Sleep(10*time.Microsecond)
 					newVote <- reply.VoteGranted
+					//if reply.Term > rf.currentTerm {
+					//	rf.currentTerm = reply.Term
+					//	rf.state = 0
+					//	rf.votesFor = -1
+					//}
 				} else {
 					//did not receive vote maybe server is down
 				}
 			}(i, args, reply, newVote)
-
+			rf.mu.Unlock()
 		} else {
 			rf.mu.Unlock()
 		}
@@ -629,8 +676,10 @@ func startElection(rf *Raft) {
 			if incomingVote {
 				votesReceived++
 			}
-			//rf.mu.Lock()
-			if votesReceived > votesNeeded && rf.state != 2 {
+			rf.mu.Lock()
+			state := rf.state
+			rf.mu.Unlock()
+			if votesReceived > votesNeeded && state == 1 {
 				rf.mu.Lock()
 				//reinitiallize arrays
 				rf.nextIndex = make([]int, len(rf.peers))
@@ -640,7 +689,7 @@ func startElection(rf *Raft) {
 				}
 				rf.state = 2
 				rf.votesFor = -1
-				fmt.Println("NEW LEADER IS: ", rf.me, "ME STATE ", rf.state, "STO TERM ", rf.currentTerm)
+				//fmt.Println("NEW LEADER IS: ", rf.me, "ME STATE ", rf.state, "STO TERM ", rf.currentTerm)
 
 				rf.leaderID = rf.me
 				rf.mu.Unlock()
@@ -651,7 +700,7 @@ func startElection(rf *Raft) {
 		default:
 			rf.mu.Lock()
 
-			if time.Now().Sub(rf.startedElection) > rf.electionTimeOut {
+			if time.Now().Sub(rf.startedElection) > rf.generateRandomTimeOut(600, 10) {
 				rf.mu.Unlock()
 				VOTING_NOW = false
 				break
@@ -669,23 +718,20 @@ func sendAppendEntries(rf *Raft) {
 			args := AppendEntriesArgs{
 				Term:         rf.currentTerm,
 				LeaderId:     rf.me,
-				PrevLogIndex: 0, //rf.nextIndex[i] - 1,
-				PrevLogTerm:  0,
-				Entries:      rf.emptyLog,
+				PrevLogIndex: rf.nextIndex[i] - 1,
 				LeaderCommit: rf.commitIndex}
 			var reply AppendEntriesReply
-			//fmt.Println("MEGETHOS0: ", len(rf.Log), len(rf.Log)-1,  ">=",  rf.nextIndex[i])
-			//fmt.Println("MEGETHOS: ", len(rf.Log))
+			////fmt.Println("MEGETHOS0: ", len(rf.Log), len(rf.Log)-1,  ">=",  rf.nextIndex[i])
+			////fmt.Println("MEGETHOS: ", len(rf.Log))
 			//args complete
-			//fmt.Println(": ", rf.me, " STELNW TO LOG MOU GIA REPLICATION STON ", i, "TO LOG MOU POU THA EPREPE NA EXEI MEGETHOS: ", len(rf.Log)," EINAI:")
+			////fmt.Println(": ", rf.me, " STELNW TO LOG MOU GIA REPLICATION STON ", i, "TO LOG MOU POU THA EPREPE NA EXEI MEGETHOS: ", len(rf.Log)," EINAI:")
 
-			args.PrevLogIndex = rf.nextIndex[i] - 1
 			//if args.PrevLogIndex == -1 {
 			//	args.PrevLogIndex =0
 			//}
-			//fmt.Println("--------------------------- ", args.PrevLogIndex)
+			////fmt.Println("--------------------------- ", args.PrevLogIndex)
 			if rf.nextIndex[i]-1 >= 0 && rf.nextIndex[i]-1 < len(rf.Log) {
-				fmt.Println(len(rf.Log), " : ", rf.nextIndex[i]-1)
+				////fmt.Println(len(rf.Log), " : ", rf.nextIndex[i]-1)
 				args.PrevLogTerm = rf.Log[rf.nextIndex[i]-1].Term
 			}
 
@@ -693,27 +739,36 @@ func sendAppendEntries(rf *Raft) {
 				args.Entries = rf.Log[rf.nextIndex[i]:]
 			}
 
-			fmt.Println(": ", rf.me, " LEADER EIMAI KAI STELNW STON ", i, "TO LOG MOU EXEI MEGETHOS: ", len(rf.Log), " kai tha steilw apo to ", rf.nextIndex[i], " kai meta")
+			////fmt.Println(": ", rf.me, " LEADER EIMAI KAI STELNW STON ", i, "TO LOG MOU EXEI MEGETHOS: ", len(rf.Log), " kai tha steilw apo to ", rf.nextIndex[i], " kai meta")
 			for i := 0; i < len(args.Entries); i++ {
-				fmt.Println("			", args.Entries[i], " ENTRY")
+				//fmt.Println("			", args.Entries[i], " ENTRY")
 			}
-			fmt.Println(": ", rf.me, " TA NEXTiNDEX MOU EINAI:  ")
+			////fmt.Print(": ", rf.me, " TA NEXTiNDEX MOU EINAI:  ")
 			for i := 0; i < len(rf.nextIndex); i++ {
-				fmt.Println(rf.nextIndex[i], " index")
+				//fmt.Print(rf.nextIndex[i], " ")
 			}
+			////fmt.Println()
 
-			rf.mu.Unlock()
 			//go rf.sendAppendEntries(i, &args, &AppendEntriesReply{})
-			////fmt.Println(":", rf.me, "ME STATE: ", rf.state, "KAI STELNW APPEND STON ", i, "GIA TO TERM ", rf.currentTerm, "TIME: ")
+			//////fmt.Println(":", rf.me, "ME STATE: ", rf.state, "KAI STELNW APPEND STON ", i, "GIA TO TERM ", rf.currentTerm, "TIME: ")
 			go func(i int, args AppendEntriesArgs, reply AppendEntriesReply) {
-				//fmt.Println(":", rf.me, "ME STATE: ", rf.state, "KAI STELNW APPEND STON ", i, "GIA TO TERM ", rf.currentTerm, "TIME: ")
+				////fmt.Println(":", rf.me, "ME STATE: ", rf.state, "KAI STELNW APPEND STON ", i, "GIA TO TERM ", rf.currentTerm, "TIME: ")
 				rf.sendAppendEntries(i, &args, &reply)
 			}(i, args, reply)
-
+			rf.mu.Unlock()
 		} else {
 			rf.mu.Unlock()
 		}
 	}
+}
+
+func (rf *Raft) generateRandomTimeOut(min int, range_ int) time.Duration {
+	//rand.Seed(int64(rf.me*2))
+	//for{
+	//	fmt.Println(time.Duration(rand.Intn(range_) + min)*time.Millisecond)
+	//}
+	//return time.Duration(rand.Intn(range_) + min)*time.Millisecond
+	return time.Duration(rand.Intn(700-600)+600) * time.Millisecond
 }
 
 //
@@ -730,10 +785,10 @@ func sendAppendEntries(rf *Raft) {
 func Make(peers []*labrpc.ClientEnd, me int,
 	persister *Persister, applyCh chan ApplyMsg) *Raft {
 	rf := &Raft{}
-	////fmt.Println("-------------------------------------------------------------------")
-	////fmt.Println("-------------------------------------------------------------------")
-	////fmt.Println("-------------------------------------------------------------------")
-	////fmt.Println("-------------------------------------------------------------------")
+	fmt.Println("-------------------------------------------------------------------")
+	//////fmt.Println("-------------------------------------------------------------------")
+	//////fmt.Println("-------------------------------------------------------------------")
+	//////fmt.Println("-------------------------------------------------------------------")
 
 	rf.peers = peers
 
@@ -746,7 +801,7 @@ func Make(peers []*labrpc.ClientEnd, me int,
 	rf.currentTerm = 0
 	rf.votesFor = -1
 	rf.commitIndex = 0
-	rf.lastApplied = -0
+	rf.lastApplied = 0
 	rf.leaderID = -1
 	rf.applyChan = applyCh
 	rf.lastTermToVote = -1
