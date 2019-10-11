@@ -335,6 +335,8 @@ func TestRejoin2B(t *testing.T) {
 }
 
 func TestBackup2B(t *testing.T) {
+	//time.Sleep(5000 *time.Millisecond)
+	//fmt.Println("OK NOW")
 	servers := 5
 	cfg := make_config(t, servers, false)
 	defer cfg.cleanup()

@@ -383,6 +383,7 @@ func (cfg *config) one(cmd int, expectedServers int) int {
 	t0 := time.Now()
 	starts := 0
 	for time.Since(t0).Seconds() < 10 {
+		//fmt.Println("KANW FORLOOP" )
 		// try all the servers, maybe one is the leader.
 		index := -1
 		for si := 0; si < cfg.n; si++ {
@@ -394,6 +395,7 @@ func (cfg *config) one(cmd int, expectedServers int) int {
 			}
 			cfg.mu.Unlock()
 			if rf != nil {
+
 				index1, _, ok := rf.Start(cmd)
 				if ok {
 					index = index1
@@ -405,6 +407,7 @@ func (cfg *config) one(cmd int, expectedServers int) int {
 		if index != -1 {
 			// somebody claimed to be the leader and to have
 			// submitted our command; wait a while for agreement.
+			//fmt.Println("VRHKA leader KAI EINAI O : ", index)
 			t1 := time.Now()
 			for time.Since(t1).Seconds() < 2 {
 				nd, cmd1 := cfg.nCommitted(index)
