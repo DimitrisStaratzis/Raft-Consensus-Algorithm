@@ -90,7 +90,7 @@ func TestBasicAgree2B(t *testing.T) {
 	cfg := make_config(t, servers, false)
 	defer cfg.cleanup()
 
-	fmt.Printf("Test (2B): basic agreement ...\n")
+	fmt.Printf("\n\n\n\n\nTest (2B): basic agreement ...\n")
 
 	iters := 3
 	for index := 1; index < iters+1; index++ {
