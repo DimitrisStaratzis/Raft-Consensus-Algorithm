@@ -26,6 +26,8 @@ import (
 	//"fmt"
 
 	//"fmt"
+
+	//"fmt"
 	//"//fmt"
 	//"//fmt"
 	//"//fmt"
@@ -134,13 +136,13 @@ func (rf *Raft) persist() {
 	_ = e.Encode(rf.VotesFor)
 	_ = e.Encode(rf.CurrentTerm)
 
-	_ = e.Encode(rf.State)
-	_ = e.Encode(rf.LeaderID)
-	_ = e.Encode(rf.MatchIndex)
-	_ = e.Encode(rf.NextIndex)
-	_ = e.Encode(rf.CommitIndex)
-	_ = e.Encode(rf.LastApplied)
-	_ = e.Encode(rf.Killed)
+	//_ = e.Encode(rf.State)
+	//_ = e.Encode(rf.LeaderID)
+	//_ = e.Encode(rf.MatchIndex)
+	//_ = e.Encode(rf.NextIndex)
+	//_ = e.Encode(rf.CommitIndex)
+	//_ = e.Encode(rf.LastApplied)
+	//_ = e.Encode(rf.Killed)
 	data := w.Bytes()
 	rf.persister.SaveRaftState(data)
 }
@@ -161,13 +163,13 @@ func (rf *Raft) readPersist(data []byte) {
 	_ = d.Decode(&rf.VotesFor)
 	_ = d.Decode(&rf.CurrentTerm)
 
-	_ = d.Decode(&rf.State)
-	_ = d.Decode(&rf.LeaderID)
-	_ = d.Decode(&rf.MatchIndex)
-	_ = d.Decode(&rf.NextIndex)
-	_ = d.Decode(&rf.CommitIndex)
-	_ = d.Decode(&rf.LastApplied)
-	_ = d.Decode(&rf.Killed)
+	//_ = d.Decode(&rf.State)
+	//_ = d.Decode(&rf.LeaderID)
+	//_ = d.Decode(&rf.MatchIndex)
+	//_ = d.Decode(&rf.NextIndex)
+	//_ = d.Decode(&rf.CommitIndex)
+	//_ = d.Decode(&rf.LastApplied)
+	//_ = d.Decode(&rf.Killed)
 
 }
 
@@ -656,6 +658,10 @@ func (rf *Raft) Kill() {
 
 func (rf *Raft) runServer() {
 
+	rand.Seed(time.Now().UnixNano())
+	random := rand.Intn(100)
+	rand.Seed(int64(random))
+	timeout := time.Duration(rand.Intn(200)+300) * time.Millisecond
 	for {
 		rf.mu.Lock()
 		killed := rf.Killed
@@ -668,13 +674,8 @@ func (rf *Raft) runServer() {
 		rf.mu.Unlock()
 		if state == 0 {
 			rf.mu.Lock()
-			rand.Seed(int64((rf.me + 1) * 50))
-			//////fmt.Println(time.Now().UnixNano(), " ELA RE MALAKA")
-			//////fmt.Println(time.Now().UnixNano(), " ELA RE MALAKA")
-			timeout := time.Duration(rand.Intn(300)+600) * time.Millisecond
-			//timeout := time.Duration(rand.Intn(300) + 600)*time.Millisecond
 			if time.Now().Sub(rf.previousHeartBeatTime) > timeout {
-				////fmt.Println(timeout, " XAXA")
+				//fmt.Println(time.Now().Sub(rf.previousHeartBeatTime), " /----/ ", timeout, " XAXA")
 				//rf.mu.Lock()
 				rf.State = 1
 				rf.persist()
@@ -709,6 +710,11 @@ func startElection(rf *Raft) {
 	votesNeeded := rf.numberOfPeers / 2
 	votesReceived := 1
 	newVote := make(chan vote)
+
+	rand.Seed(time.Now().UnixNano())
+	random := rand.Intn(100)
+	rand.Seed(int64(random))
+	timeout2 := time.Duration(rand.Intn(200)+300) * time.Millisecond
 
 	//rf.mu.Unlock()
 
@@ -801,11 +807,6 @@ func startElection(rf *Raft) {
 			//rf.mu.Unlock()
 		default:
 			rf.mu.Lock()
-
-			rand.Seed(int64((rf.me + 1) * 50))
-			//////fmt.Println(time.Now().UnixNano(), " ELA RE MALAKA")
-			//////fmt.Println(time.Now().UnixNano(), " ELA RE MALAKA")
-			timeout2 := time.Duration(rand.Intn(300)+600) * time.Millisecond
 			//////fmt.Println(timeout2, " ELA RE MALAKA")
 			if time.Now().Sub(rf.startedElection) > timeout2 { //rf.generateRandomTimeOut(500, 300) {
 				votesReceived = 0
