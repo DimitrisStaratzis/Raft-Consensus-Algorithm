@@ -407,6 +407,7 @@ func (rf *Raft) AppendEntries(args *AppendEntriesArgs, reply *AppendEntriesReply
 			go func(rf *Raft) {
 				rf.mu.Lock()
 				if rf.Killed {
+					rf.mu.Unlock()
 					return
 				}
 				for i := rf.LastApplied + 1; i <= rf.CommitIndex; i++ {
@@ -425,7 +426,6 @@ func (rf *Raft) AppendEntries(args *AppendEntriesArgs, reply *AppendEntriesReply
 		rf.persist()
 		rf.mu.Unlock()
 	}
-
 }
 
 //func thereIsConflict(raft *Raft) bool {
@@ -505,10 +505,10 @@ func (rf *Raft) sendAppendEntries(server int, args *AppendEntriesArgs, reply *Ap
 			////fmt.Println("XAXA")
 		}
 
-		//count if majority commited my entries
+		//search all entries from last to commit index.
 		for N := len(rf.Log) - 1; rf.CommitIndex < N; N-- {
 			count := 1
-
+			//if equal terms check if if the majority has it
 			if rf.Log[N].Term == rf.CurrentTerm {
 				for i := range rf.peers {
 					if rf.MatchIndex[i] >= N {
@@ -517,6 +517,7 @@ func (rf *Raft) sendAppendEntries(server int, args *AppendEntriesArgs, reply *Ap
 				}
 			}
 			////fmt.Println("EXOUN TO LOG MOU: ", count, " ENW THA EPREPE ", (len(rf.peers)/2)+1)
+			//if the majority has it apply entries to state machine
 			if count > len(rf.peers)/2 {
 				rf.CommitIndex = N
 				rf.persist()
@@ -525,6 +526,7 @@ func (rf *Raft) sendAppendEntries(server int, args *AppendEntriesArgs, reply *Ap
 				go func(rf *Raft) {
 					rf.mu.Lock()
 					if rf.Killed {
+						rf.mu.Unlock()
 						return
 					}
 					for i := rf.LastApplied + 1; i <= rf.CommitIndex; i++ {
@@ -776,6 +778,7 @@ func startElection(rf *Raft) {
 
 	}
 
+	//gather all votes
 	for VOTING_NOW {
 		select {
 		case incomingVote := <-newVote:
