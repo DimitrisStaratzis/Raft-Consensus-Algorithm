@@ -270,7 +270,7 @@ func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
 func candidateLogIsUpToDate(args *RequestVoteArgs, rf *Raft) bool {
 	if len(rf.Log) > 0 {
 		if rf.Log[len(rf.Log)-1].Term != args.LastLogTerm {
-			return args.LastLogTerm >= rf.Log[len(rf.Log)-1].Term
+			return args.LastLogTerm > rf.Log[len(rf.Log)-1].Term
 		} else {
 			return args.LastLogIndex >= len(rf.Log)-1
 		}
@@ -654,7 +654,7 @@ func (rf *Raft) Kill() {
 	// Your code here, if desired.
 	rf.mu.Lock()
 	rf.Killed = true
-	rf.persist()
+	//rf.persist()
 	rf.mu.Unlock()
 }
 

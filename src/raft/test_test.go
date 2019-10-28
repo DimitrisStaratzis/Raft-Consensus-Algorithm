@@ -49,40 +49,40 @@ func TestReElection2A(t *testing.T) {
 
 	leader1 := cfg.checkOneLeader()
 
-	fmt.Println("SERVER ", leader1, " IS OFFLINE")
+	//fmt.Println("SERVER ", leader1, " IS OFFLINE")
 	// if the leader disconnects, a new one should be elected.
 	cfg.disconnect(leader1)
 	cfg.checkOneLeader()
-	fmt.Printf("  ... Passed1\n")
+	fmt.Printf("  ... Passed\n")
 
 	// if the old leader rejoins, that shouldn't
 	// disturb the old leader.
 	cfg.connect(leader1)
-	fmt.Println("SERVER ", leader1, " IS ONLINE AGAIN")
+	//fmt.Println("SERVER ", leader1, " IS ONLINE AGAIN")
 	leader2 := cfg.checkOneLeader()
-	fmt.Printf("  ... Passed2\n")
+	fmt.Printf("  ... Passed\n")
 
 	// if there's no quorum, no leader should
 	// be elected.
 	cfg.disconnect(leader2)
 	cfg.disconnect((leader2 + 1) % servers)
-	fmt.Println("SERVERS DISCONNECTED = ", leader2, " and ", (leader2+1)%servers)
+	//fmt.Println("SERVERS DISCONNECTED = ", leader2, " and ", (leader2+1)%servers)
 	time.Sleep(2 * RaftElectionTimeout)
 	cfg.checkNoLeader()
-	fmt.Printf("  ... Passed3\n")
+	fmt.Printf("  ... Passed\n")
 
 	// if a quorum arises, it should elect a leader.
-	fmt.Println("SERVER CONNECTED = ", (leader2+1)%servers)
+	//fmt.Println("SERVER CONNECTED = ", (leader2+1)%servers)
 	cfg.connect((leader2 + 1) % servers)
 	ld := cfg.checkOneLeader()
 	fmt.Println("  ... Passed4 me leader ton: ", ld)
 
 	// re-join of last node shouldn't prevent leader from existing.
-	fmt.Println("LAST SERVER CONNECTED = ", leader2)
+	//fmt.Println("LAST SERVER CONNECTED = ", leader2)
 	cfg.connect(leader2)
 	cfg.checkOneLeader()
 
-	fmt.Printf("  ... Passed OLA\n")
+	fmt.Printf("  ... Passed\n")
 }
 
 func TestBasicAgree2B(t *testing.T) {
@@ -90,7 +90,7 @@ func TestBasicAgree2B(t *testing.T) {
 	cfg := make_config(t, servers, false)
 	defer cfg.cleanup()
 
-	fmt.Printf("\n\n\n\n\nTest (2B): basic agreement ...\n")
+	fmt.Printf("Test (2B): basic agreement ...\n")
 
 	iters := 3
 	for index := 1; index < iters+1; index++ {
