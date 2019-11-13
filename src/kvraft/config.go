@@ -1,6 +1,9 @@
 package raftkv
 
-import "labrpc"
+import (
+	"labrpc"
+	"log"
+)
 import "testing"
 import "os"
 
@@ -138,7 +141,7 @@ func (cfg *config) ConnectAll() {
 func (cfg *config) partition(p1 []int, p2 []int) {
 	cfg.mu.Lock()
 	defer cfg.mu.Unlock()
-	// log.Printf("partition servers into: %v %v\n", p1, p2)
+	log.Printf("partition servers into: %v %v\n", p1, p2)
 	for i := 0; i < len(p1); i++ {
 		cfg.disconnectUnlocked(p1[i], p2)
 		cfg.connectUnlocked(p1[i], p1)
@@ -230,9 +233,9 @@ func (cfg *config) ShutdownServer(i int) {
 	// the result in the superseded Persister.
 	cfg.net.DeleteServer(i)
 
-	// a fresh persister, in case old instance
+	// a fresh Persister, in case old instance
 	// continues to update the Persister.
-	// but copy old persister's content so that we always
+	// but copy old Persister's content so that we always
 	// pass Make() the last persisted state.
 	if cfg.saved[i] != nil {
 		cfg.saved[i] = cfg.saved[i].Copy()
@@ -264,9 +267,9 @@ func (cfg *config) StartServer(i int) {
 		cfg.net.Connect(cfg.endnames[i][j], j)
 	}
 
-	// a fresh persister, so old instance doesn't overwrite
+	// a fresh Persister, so old instance doesn't overwrite
 	// new instance's persisted state.
-	// give the fresh persister a copy of the old persister's
+	// give the fresh Persister a copy of the old Persister's
 	// state, so that the spec is that we pass StartKVServer()
 	// the last persisted state.
 	if cfg.saved[i] != nil {
