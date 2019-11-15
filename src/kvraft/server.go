@@ -20,6 +20,7 @@ import (
 //}
 
 func (kv *RaftKV) persist() {
+
 	w := new(bytes.Buffer)
 	e := gob.NewEncoder(w)
 
@@ -83,73 +84,74 @@ type RaftKV struct {
 
 //
 func (kv *RaftKV) ListenerForCommitedEntries() {
-
 	//waitingForAppliedCommands := true
 	var leader bool
 
 	for {
-		if kv.killed {
-			break
-		}
 
+		kv.mu.Lock()
+		killed := kv.killed
+		kv.mu.Unlock()
+		if killed && len(kv.PendingCommitedOperations) == 0 {
+			return
+		}
 		select {
 		case applyMsg := <-kv.applyCh:
 
+			kv.mu.Lock()
+			killed := kv.killed
+			kv.mu.Unlock()
+			if killed && len(kv.PendingCommitedOperations) == 0 {
+				return
+			}
+
 			operation := applyMsg.Command.(Op)
 			index := applyMsg.Index
-			leader = applyMsg.Leader
+			_, leader = kv.rf.GetState()
 
 			kv.mu.Lock()
 			//
 			fmt.Println(kv.me, " Apply message with operation:, ", operation.Type, " for index: ", index, " arrived", "raft is leader: ", leader)
 
-			sequenceN, _ := kv.PutAppedOperations[operation.Cid]
-			sequenceNG, _ := kv.GetOperations[operation.Cid]
+			sequenceN, putExists := kv.PutAppedOperations[operation.Cid]
+			sequenceNG, getExists := kv.GetOperations[operation.Cid]
 
 			if operation.Type == "Put" {
-				if operation.SequenceN > sequenceN {
-					fmt.Println(kv.me, " KV putting value: ", operation.Value, " at key: ", operation.Key, " at server: ", kv.me)
+				if (operation.SequenceN > sequenceN) || (leader && !putExists) {
+					fmt.Println(kv.me, " Client: ", operation.Cid, " KV putting value: ", operation.Value, " at key: ", operation.Key, " at server: ", kv.me)
 					kv.Store[operation.Key] = operation.Value
-					fmt.Println(kv.me, " Store at: ", operation.Key, " now has value: ", kv.Store[operation.Key], "\n\n")
+					fmt.Println(kv.me, " Client: ", operation.Cid, " Store at: ", operation.Key, " now has value: ", kv.Store[operation.Key], "\n\n")
 					kv.PutAppedOperations[operation.Cid] = operation.SequenceN
-					fmt.Println(kv.me, " Duplicate detection updates succesfully")
 				}
 
 			} else if operation.Type == "Append" {
-				if operation.SequenceN > sequenceN {
-					fmt.Println(kv.me, " KV appending value: ", operation.Value, " at key: ", operation.Key, " at server: ", kv.me)
+				if (operation.SequenceN > sequenceN) || (leader && !putExists) {
+					fmt.Println(kv.me, " Client: ", operation.Cid, " KV appending value: ", operation.Value, " at key: ", operation.Key, " at server: ", kv.me)
 					kv.Store[operation.Key] += operation.Value
-					fmt.Println(kv.me, " Store at: ", operation.Key, " now has value: ", kv.Store[operation.Key], "\n\n")
+					fmt.Println(kv.me, " Client: ", operation.Cid, " Store at: ", operation.Key, " now has value: ", kv.Store[operation.Key], "\n\n")
 					kv.PutAppedOperations[operation.Cid] = operation.SequenceN
-					fmt.Println(kv.me, " Duplicate detection updates succesfully")
 
 				}
 			} else {
-				if operation.SequenceN > sequenceNG {
-					fmt.Println(kv.me, " KV retrieving value: ", operation.Value, "from key: ", operation.Key)
+				if (operation.SequenceN > sequenceNG) || (leader && !getExists) {
+					fmt.Println(kv.me, " Client: ", operation.Cid, " KV retrieving value: ", operation.Value, "from key: ", operation.Key)
 					kv.GetOperations[operation.Cid] = operation.SequenceN
-					fmt.Println(kv.me, " Duplicate detection updates succesfully")
 				}
 			}
-			kv.persist()
 
 			if leader {
 				ch, ok := kv.PendingCommitedOperations[index]
-
 				if ok {
-					//
-					fmt.Println(kv.me, " Got channel")
+					fmt.Println(kv.me, " Client: ", operation.Cid, " Got channel for index: ", index, " and operation:  ", operation.Type)
 					ch <- applyMsg
 				} else {
-					//
-					fmt.Println(kv.me, " Didnt get channel")
-					////
-					fmt.Println(kv.PendingCommitedOperations)
-
+					fmt.Println(kv.me, " Client: ", operation.Cid, " Didnt get channel for index: ", index, " and operation:  ", operation.Type)
 				}
 			}
-			//kv.persist()
+			kv.persist()
 			kv.mu.Unlock()
+
+			//kv.persist()
 
 			//rf.mu.Unlock()
 		default:
@@ -169,9 +171,10 @@ func (kv *RaftKV) ListenerForCommitedEntries() {
 
 func (kv *RaftKV) Get(args *GetArgs, reply *GetReply) {
 	//
-	fmt.Println(kv.me, " received get")
 	// Your code here.
 	operation := Op{Type: "Get", Key: args.Key}
+
+	fmt.Println(kv.me, " Client:  ", operation.Cid, " received get")
 
 	index, _, isLeader := kv.rf.Start(operation)
 
@@ -181,27 +184,32 @@ func (kv *RaftKV) Get(args *GetArgs, reply *GetReply) {
 	}
 	reply.WrongLeader = false
 
-	fmt.Println(kv.me, " KV sent get with key: ", operation.Key)
+	fmt.Println(kv.me, " Client: ", operation.Cid, " KV sent get with key: ", operation.Key)
 
 	newChannel := make(chan raft.ApplyMsg)
 	kv.mu.Lock()
 	kv.PendingCommitedOperations[index] = newChannel
 	kv.mu.Unlock()
-	//
-	fmt.Println(kv.me, " KV Made new channel at index: ", index)
+	fmt.Println(kv.me, " Client: ", operation.Cid, " KV Made new channel at index: ", index)
 
 	select {
 	case incomingMsg := <-newChannel:
-		//
-		fmt.Println(kv.me, " KV get operation was applied and I received it at index: ", index)
+		fmt.Println(kv.me, " Client: ", operation.Cid, " KV get operation was applied and I received it at index: ", index)
 
+		kv.mu.Lock()
+		killed := kv.killed
+		kv.mu.Unlock()
+		if killed && len(kv.PendingCommitedOperations) == 0 {
+			return
+		}
 		op := incomingMsg.Command.(Op)
+		kv.mu.Lock()
+		delete(kv.PendingCommitedOperations, index)
+		kv.mu.Unlock()
 
 		if op == operation {
-
-			fmt.Println(kv.me, " Store: ", kv.Store, " value: ", kv.Store[op.Key])
-			//
-			fmt.Println(kv.me, " KV finished, returning Store vale: ", kv.Store[op.Key], " from server: ", kv.me)
+			fmt.Println(kv.me, " Client: ", operation.Cid, " Store: ", kv.Store, " value: ", kv.Store[op.Key])
+			fmt.Println(kv.me, " Client: ", operation.Cid, " KV finished, returning Store vale: ", kv.Store[op.Key], " from server: ", kv.me)
 			//var valueExists bool
 			value, exists := kv.Store[op.Key]
 
@@ -211,76 +219,67 @@ func (kv *RaftKV) Get(args *GetArgs, reply *GetReply) {
 			} else {
 				reply.Value = ErrNoKey
 			}
-			kv.mu.Lock()
-			delete(kv.PendingCommitedOperations, index)
-			kv.mu.Unlock()
+
 			return
 		}
-
-		//rf.mu.Unlock()
-	case <-time.After(800 * time.Millisecond):
-		//
-		fmt.Println(kv.me, " get expired for key: ", args.Key)
+	case <-time.After(2000 * time.Millisecond):
+		fmt.Println(kv.me, " Client: ", operation.Cid, " get expired for key: ", args.Key)
 		reply.WrongLeader = true
 		kv.mu.Lock()
 		delete(kv.PendingCommitedOperations, index)
 		kv.mu.Unlock()
 		return
-
 	}
-
 }
 
 func (kv *RaftKV) PutAppend(args *PutAppendArgs, reply *PutAppendReply) {
 
-	//timeStarted := time.Now()
-	//
-	fmt.Println(kv.me, " received putappend")
-
 	operation := Op{Type: args.Op, Key: args.Key, Value: args.Value, Cid: args.Cid, SequenceN: args.SequenceN}
+
+	fmt.Println(kv.me, " Client: ", operation.Cid, " received putappend")
 
 	index, _, isLeader := kv.rf.Start(operation)
 
 	if !isLeader {
 		//
-		fmt.Println(kv.me, " putAppend failed because I am not leader ")
+		fmt.Println(kv.me, " Client: ", operation.Cid, " putAppend failed because I am not leader ")
 		reply.WrongLeader = true
 		return
 	}
 	reply.WrongLeader = false
 
-	fmt.Println(kv.me, " KV sent PutAppend with key: ", operation.Key, " value: ", operation.Value)
+	fmt.Println(kv.me, " Client: ", operation.Cid, " KV sent PutAppend with key: ", operation.Key, " value: ", operation.Value)
 
 	newChannel := make(chan raft.ApplyMsg)
 	kv.mu.Lock()
 	kv.PendingCommitedOperations[index] = newChannel
 	kv.mu.Unlock()
 	//
-	fmt.Println(kv.me, " KV Made new channel at index: ", index)
+	fmt.Println(kv.me, " Client: ", operation.Cid, " KV Made new channel at index: ", index)
 
 	select {
 	case incomingMsg := <-newChannel:
-		//
-		fmt.Println(kv.me, " KV PutAppend operation was applied and I received it at index: ", index)
+		kv.mu.Lock()
+		killed := kv.killed
+		kv.mu.Unlock()
+		if killed && len(kv.PendingCommitedOperations) == 0 {
+			return
+		}
+		fmt.Println(kv.me, " Client: ", operation.Cid, " KV PutAppend operation was applied and I received it at index: ", index)
 
 		op := incomingMsg.Command.(Op)
+		kv.mu.Lock()
+		delete(kv.PendingCommitedOperations, index)
+		kv.mu.Unlock()
 
 		if op == operation {
 			reply.WrongLeader = false
-			kv.mu.Lock()
-			delete(kv.PendingCommitedOperations, index)
-			kv.mu.Unlock()
 			return
-
-		} else {
-			reply.WrongLeader = true
-			return
-
 		}
 
-	case <-time.After(800 * time.Millisecond):
+	case <-time.After(2000 * time.Millisecond):
 		//
-		fmt.Println(kv.me, " putAppend expired for key: ", args.Key, " and value: ", args.Value)
+		fmt.Println(kv.me, " Client: ", operation.Cid, " putAppend expired for key: ", args.Key, " and value: ", args.Value)
 		reply.WrongLeader = true
 		kv.mu.Lock()
 		delete(kv.PendingCommitedOperations, index)
@@ -299,16 +298,16 @@ func (kv *RaftKV) PutAppend(args *PutAppendArgs, reply *PutAppendReply) {
 // turn off debug output from this instance.
 //
 func (kv *RaftKV) Kill() {
+	time.Sleep(1200 * time.Millisecond)
 	kv.mu.Lock()
 	defer kv.mu.Unlock()
 	kv.killed = true
 	kv.rf.Kill()
-
 	//kv.PendingCommitedOperations = make(map[int]chan raft.ApplyMsg)
-	//kv.persist()
-	//
 	//kv.PutAppedOperations = make (map[int64]int)
 	//kv.GetOperations = make (map[int64]int)
+
+	//kv.persist()
 	// Your code here, if desired.
 }
 
@@ -348,12 +347,11 @@ func StartKVServer(servers []*labrpc.ClientEnd, me int, persister *raft.Persiste
 	kv.applyCh = make(chan raft.ApplyMsg)
 
 	if data := persister.ReadSnapshot(); kv.snapshotsEnabled && data != nil && len(data) > 0 {
-		fmt.Println(kv.me, " I loaded data from persist")
+		//fmt.Println(kv.me, " I loaded data from persist")
 		kv.loadPersist(data)
 	}
 
 	kv.rf = raft.Make(servers, me, persister, kv.applyCh)
-
 	go kv.ListenerForCommitedEntries()
 
 	return kv

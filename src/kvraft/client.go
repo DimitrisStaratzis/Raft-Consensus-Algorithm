@@ -3,6 +3,9 @@ package raftkv
 import (
 	"crypto/rand"
 	"fmt"
+	"time"
+
+	//"go/ast"
 	"labrpc"
 	"math/big"
 )
@@ -26,18 +29,17 @@ func nrand() int64 {
 	max := big.NewInt(int64(1) << 62)
 	bigx, _ := rand.Int(rand.Reader, max)
 	x := bigx.Int64()
-	fmt.Print("--------RANDOM IS:", x)
 	return x
 }
 
 func MakeClerk(servers []*labrpc.ClientEnd) *Clerk {
-	//time.Sleep(time.Millisecond*800)
 	ck := new(Clerk)
 	ck.servers = servers
 	ck.cid = nrand()
-	ck.sequenceN = 1
-	ck.sequenceNGet = 1
+	ck.sequenceN = 0
+	ck.sequenceNGet = 0
 	ck.Leader = -1
+	fmt.Println("CLIENT MADE")
 	// You'll have to add code here.
 	return ck
 }
@@ -58,60 +60,50 @@ func (ck *Clerk) Get(key string) string {
 
 	// You will have to modify this function.
 	//TODO OPTIMIZATION, KEEP LEADER
-	ck.sequenceNGet++
 	if Debug {
-		//
-		//
 		fmt.Println("GET operation requested for key: ", key, " sequence: ", ck.sequenceNGet)
 	}
-
-	//ck.sequenceNGet++
+	ck.sequenceNGet++
 	args := GetArgs{
 		Key:       key,
 		SequenceN: ck.sequenceNGet,
 		Cid:       ck.cid}
 	j := 0
-	//time.Sleep(time.Millisecond*500)
-	for { //i:=0; i < len(ck.servers); i++{
-		////
-		//
+	for {
 		fmt.Println("sendin")
 		var reply GetReply
 		var ok bool
-		in := j % len(ck.servers)
-		//
-		//
-		fmt.Println("sendingG  ", in)
+		var index int
 
-		ok = ck.servers[in].Call("RaftKV.Get", &args, &reply)
+		if ck.Leader != -1 {
+			index = ck.Leader
+		} else {
+			index = j % len(ck.servers)
+		}
+		fmt.Println("sendingG  ", index)
+		ok = ck.servers[index].Call("RaftKV.Get", &args, &reply)
 		if ok {
 			if !reply.WrongLeader {
 				if reply.Err == ErrNoKey {
 					return ""
 				}
 				if Debug {
-					//
-					//
-					fmt.Println(in, " Will return: ", reply.Value)
+					fmt.Println(index, " Will return: ", reply.Value)
 				}
+				ck.Leader = index
 				return reply.Value
 			} else {
-				//
-				//
-				fmt.Println(in, " wrong leader")
-				//if reply.killed{
-				//
-				//	break
-				//}
+				fmt.Println(index, " wrong leader")
+				ck.Leader = -1
 			}
 		} else {
-			//
-			//
 			fmt.Println("RPC for get failed")
+			ck.Leader = -1
 		}
 		j++
+		time.Sleep(10 * time.Millisecond)
+
 	}
-	//
 	return ""
 }
 
@@ -134,8 +126,6 @@ func (ck *Clerk) PutAppend(key string, value string, op string) {
 	i := 0
 	ck.sequenceN++
 	if Debug {
-		//
-		//
 		fmt.Println("PutAppend operation requested with key: ", key, " and value: ", value, " Sequence: ", ck.sequenceN)
 	}
 	args := PutAppendArgs{
@@ -148,31 +138,32 @@ func (ck *Clerk) PutAppend(key string, value string, op string) {
 	for {
 		fmt.Println("sendinP ")
 		var reply PutAppendReply
-		in := i % len(ck.servers)
+		var index int
 
-		ok := ck.servers[in].Call("RaftKV.PutAppend", &args, &reply)
+		if ck.Leader != -1 {
+			index = ck.Leader
+		} else {
+			index = i % len(ck.servers)
+		}
 
-		fmt.Println("sentA  ", in)
+		ok := ck.servers[index].Call("RaftKV.PutAppend", &args, &reply)
+
 		if ok {
 			if !reply.WrongLeader {
-				//
-				//
 				fmt.Println("PutAppend success")
-
+				ck.Leader = index
 				return
 			} else {
-				//
-				//
-				fmt.Println(in, " Wrong leader")
-				//if reply.killed{
-				//	break
-				//}
+				fmt.Println(index, " Wrong leader")
+				ck.Leader = -1
 			}
+		} else {
+			ck.Leader = -1
 		}
 		i++
-	}
-	//
+		time.Sleep(10 * time.Millisecond)
 
+	}
 }
 
 func (ck *Clerk) Put(key string, value string) {

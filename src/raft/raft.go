@@ -552,7 +552,10 @@ func (rf *Raft) startLocalApplyProcess(applyChan chan ApplyMsg) {
 						RaftDebug("Locally applying log: %s", rf, v)
 
 						//fmt.Println(rf.me, " Raft Applying message with index: ", v.Index)
-						applyChan <- ApplyMsg{Index: v.Index, Command: v.Command, Leader: rf.state == Leader}
+						rf.Lock()
+						boolean := rf.state == Leader
+						rf.Unlock()
+						applyChan <- ApplyMsg{Index: v.Index, Command: v.Command, Leader: boolean}
 					}
 					rf.Lock()
 					rf.lastApplied += len(entries)
