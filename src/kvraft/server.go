@@ -19,7 +19,7 @@ import (
 //	return
 //}
 
-func (kv *RaftKV) persist() {
+func (kv *RaftKV) saveSnapshot(index int) {
 
 	w := new(bytes.Buffer)
 	e := gob.NewEncoder(w)
@@ -33,11 +33,13 @@ func (kv *RaftKV) persist() {
 	data := w.Bytes()
 	kv.Persister.SaveSnapshot(data)
 
+	kv.rf.CompactLog(index)
+
 	// Compact raft log til index.
 	//kv.rf.CompactLog(logIndex)
 }
 
-func (kv *RaftKV) loadPersist(data []byte) {
+func (kv *RaftKV) ReadSnapshot(data []byte) {
 
 	r := bytes.NewBuffer(data)
 	d := gob.NewDecoder(r)
@@ -105,6 +107,13 @@ func (kv *RaftKV) ListenerForCommitedEntries() {
 				return
 			}
 
+			if applyMsg.UseSnapshot {
+				kv.mu.Lock()
+				kv.ReadSnapshot(applyMsg.Snapshot)
+				kv.mu.Unlock()
+				continue
+			}
+
 			operation := applyMsg.Command.(Op)
 			index := applyMsg.Index
 			_, leader = kv.rf.GetState()
@@ -148,10 +157,13 @@ func (kv *RaftKV) ListenerForCommitedEntries() {
 					fmt.Println(kv.me, " Client: ", operation.Cid, " Didnt get channel for index: ", index, " and operation:  ", operation.Type)
 				}
 			}
-			kv.persist()
-			kv.mu.Unlock()
 
-			//kv.persist()
+			//if kv.snapshotsEnabled && 1-(kv.Persister.RaftStateSize()/kv.maxraftstate) <= 5/100 {
+			kv.saveSnapshot(applyMsg.Index)
+			//}
+
+			kv.mu.Unlock()
+			//kv.saveSnapshot()
 
 			//rf.mu.Unlock()
 		default:
@@ -307,7 +319,7 @@ func (kv *RaftKV) Kill() {
 	//kv.PutAppedOperations = make (map[int64]int)
 	//kv.GetOperations = make (map[int64]int)
 
-	//kv.persist()
+	//kv.saveSnapshot()
 	// Your code here, if desired.
 }
 
@@ -347,8 +359,8 @@ func StartKVServer(servers []*labrpc.ClientEnd, me int, persister *raft.Persiste
 	kv.applyCh = make(chan raft.ApplyMsg)
 
 	if data := persister.ReadSnapshot(); kv.snapshotsEnabled && data != nil && len(data) > 0 {
-		//fmt.Println(kv.me, " I loaded data from persist")
-		kv.loadPersist(data)
+		//fmt.Println(kv.me, " I loaded data from saveSnapshot")
+		kv.ReadSnapshot(data)
 	}
 
 	kv.rf = raft.Make(servers, me, persister, kv.applyCh)

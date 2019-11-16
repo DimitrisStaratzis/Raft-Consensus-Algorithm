@@ -360,122 +360,122 @@ func TestOnePartition(t *testing.T) {
 	fmt.Printf("  ... Passed\n")
 }
 
-func TestManyPartitionsOneClient(t *testing.T) {
-	fmt.Printf("Test: many partitions ...\n")
-	GenericTest(t, "manypartitions", 1, false, false, true, -1)
-}
-
-func TestManyPartitionsManyClients(t *testing.T) {
-	fmt.Printf("Test: many partitions, many clients ...\n")
-	GenericTest(t, "manypartitionsclnts", 5, false, false, true, -1)
-}
-
-func TestPersistOneClient(t *testing.T) {
-	fmt.Printf("Test: persistence with one client ...\n")
-	GenericTest(t, "persistone", 1, false, true, false, -1)
-}
-
-func TestPersistConcurrentt(t *testing.T) {
-	fmt.Printf("Test: persistence with concurrent clients ...\n")
-	GenericTest(t, "persistconcur", 5, true, true, false, -1)
-}
-
-func TestPersistConcurrentUnreliable(t *testing.T) {
-	fmt.Printf("Test: persistence with concurrent clients, unreliable ...\n")
-	GenericTest(t, "persistconcurunreliable", 5, true, true, false, -1)
-}
-
-func TestPersistPartition(t *testing.T) {
-	fmt.Printf("Test: persistence with concurrent clients and repartitioning servers...\n")
-	GenericTest(t, "persistpart", 5, false, true, true, -1)
-}
-
-func TestPersistPartitionUnreliable(t *testing.T) {
-	fmt.Printf("Test: persistence with concurrent clients and repartitioning servers, unreliable...\n")
-	GenericTest(t, "persistpartunreliable", 5, true, true, true, -1)
-}
-
 //
-// if one server falls behind, then rejoins, does it
-// recover by using the InstallSnapshot RPC?
-// also checks that majority discards committed log entries
-// even if minority doesn't respond.
-//
-//func TestSnapshotRPC(t *testing.T) {
-//	const nservers = 3
-//	maxraftstate := 1000
-//	cfg := make_config(t, "snapshotrpc", nservers, false, maxraftstate)
-//	defer cfg.cleanup()
-//
-//	ck := cfg.makeClient(cfg.All())
-//
-//	fmt.Printf("Test: InstallSnapshot RPC ...\n")
-//
-//	ck.Put("a", "A")
-//	check(t, ck, "a", "A")
-//
-//	// a bunch of puts into the majority partition.
-//	cfg.partition([]int{0, 1}, []int{2})
-//	{
-//		ck1 := cfg.makeClient([]int{0, 1})
-//		for i := 0; i < 50; i++ {
-//			ck1.Put(strconv.Itoa(i), strconv.Itoa(i))
-//		}
-//		time.Sleep(electionTimeout)
-//		ck1.Put("b", "B")
-//	}
-//
-//	// check that the majority partition has thrown away
-//	// most of its log entries.
-//	if cfg.LogSize() > 2*maxraftstate {
-//		t.Fatalf("logs were not trimmed (%v > 2*%v)", cfg.LogSize(), maxraftstate)
-//	}
-//
-//	// now make group that requires participation of
-//	// lagging server, so that it has to catch up.
-//	cfg.partition([]int{0, 2}, []int{1})
-//	{
-//		ck1 := cfg.makeClient([]int{0, 2})
-//		ck1.Put("c", "C")
-//		ck1.Put("d", "D")
-//		check(t, ck1, "a", "A")
-//		check(t, ck1, "b", "B")
-//		check(t, ck1, "1", "1")
-//		check(t, ck1, "49", "49")
-//	}
-//
-//	// now everybody
-//	cfg.partition([]int{0, 1, 2}, []int{})
-//
-//	ck.Put("e", "E")
-//	check(t, ck, "c", "C")
-//	check(t, ck, "e", "E")
-//	check(t, ck, "1", "1")
-//
-//	fmt.Printf("  ... Passed\n")
+//func TestManyPartitionsOneClient(t *testing.T) {
+//	fmt.Printf("Test: many partitions ...\n")
+//	GenericTest(t, "manypartitions", 1, false, false, true, -1)
 //}
 //
-//func TestSnapshotRecover(t *testing.T) {
-//	fmt.Printf("Test: persistence with one client and snapshots ...\n")
-//	GenericTest(t, "snapshot", 1, false, true, false, 1000)
+//func TestManyPartitionsManyClients(t *testing.T) {
+//	fmt.Printf("Test: many partitions, many clients ...\n")
+//	GenericTest(t, "manypartitionsclnts", 5, false, false, true, -1)
 //}
 //
-//func TestSnapshotRecoverManyClients(t *testing.T) {
-//	fmt.Printf("Test: persistence with several clients and snapshots ...\n")
-//	GenericTest(t, "snapshotunreliable", 20, false, true, false, 1000)
+//func TestPersistOneClient(t *testing.T) {
+//	fmt.Printf("Test: persistence with one client ...\n")
+//	GenericTest(t, "persistone", 1, false, true, false, -1)
 //}
 //
-//func TestSnapshotUnreliable(t *testing.T) {
-//	fmt.Printf("Test: persistence with several clients, snapshots, unreliable ...\n")
-//	GenericTest(t, "snapshotunreliable", 5, true, false, false, 1000)
+//func TestPersistConcurrentt(t *testing.T) {
+//	fmt.Printf("Test: persistence with concurrent clients ...\n")
+//	GenericTest(t, "persistconcur", 5, true, true, false, -1)
 //}
 //
-//func TestSnapshotUnreliableRecover(t *testing.T) {
-//	fmt.Printf("Test: persistence with several clients, failures, and snapshots, unreliable ...\n")
-//	GenericTest(t, "snapshotunreliablecrash", 5, true, true, false, 1000)
+//func TestPersistConcurrentUnreliable(t *testing.T) {
+//	fmt.Printf("Test: persistence with concurrent clients, unreliable ...\n")
+//	GenericTest(t, "persistconcurunreliable", 5, true, true, false, -1)
 //}
 //
-//func TestSnapshotUnreliableRecoverConcurrentPartition(t *testing.T) {
-//	fmt.Printf("Test: persistence with several clients, failures, and snapshots, unreliable and partitions ...\n")
-//	GenericTest(t, "snapshotunreliableconcurpartitions", 5, true, true, true, 1000)
+//func TestPersistPartition(t *testing.T) {
+//	fmt.Printf("Test: persistence with concurrent clients and repartitioning servers...\n")
+//	GenericTest(t, "persistpart", 5, false, true, true, -1)
 //}
+//
+//func TestPersistPartitionUnreliable(t *testing.T) {
+//	fmt.Printf("Test: persistence with concurrent clients and repartitioning servers, unreliable...\n")
+//	GenericTest(t, "persistpartunreliable", 5, true, true, true, -1)
+//}
+
+//if one server falls behind, then rejoins, does it
+//recover by using the InstallSnapshot RPC?
+//also checks that majority discards committed log entries
+//even if minority doesn't respond.
+
+func TestSnapshotRPC(t *testing.T) {
+	const nservers = 3
+	maxraftstate := 1000
+	cfg := make_config(t, "snapshotrpc", nservers, false, maxraftstate)
+	defer cfg.cleanup()
+
+	ck := cfg.makeClient(cfg.All())
+
+	fmt.Printf("Test: InstallSnapshot RPC ...\n")
+
+	ck.Put("a", "A")
+	check(t, ck, "a", "A")
+
+	// a bunch of puts into the majority partition.
+	cfg.partition([]int{0, 1}, []int{2})
+	{
+		ck1 := cfg.makeClient([]int{0, 1})
+		for i := 0; i < 50; i++ {
+			ck1.Put(strconv.Itoa(i), strconv.Itoa(i))
+		}
+		time.Sleep(electionTimeout)
+		ck1.Put("b", "B")
+	}
+
+	// check that the majority partition has thrown away
+	// most of its log entries.
+	if cfg.LogSize() > 2*maxraftstate {
+		t.Fatalf("logs were not trimmed (%v > 2*%v)", cfg.LogSize(), maxraftstate)
+	}
+
+	// now make group that requires participation of
+	// lagging server, so that it has to catch up.
+	cfg.partition([]int{0, 2}, []int{1})
+	{
+		ck1 := cfg.makeClient([]int{0, 2})
+		ck1.Put("c", "C")
+		ck1.Put("d", "D")
+		check(t, ck1, "a", "A")
+		check(t, ck1, "b", "B")
+		check(t, ck1, "1", "1")
+		check(t, ck1, "49", "49")
+	}
+
+	// now everybody
+	cfg.partition([]int{0, 1, 2}, []int{})
+
+	ck.Put("e", "E")
+	check(t, ck, "c", "C")
+	check(t, ck, "e", "E")
+	check(t, ck, "1", "1")
+
+	fmt.Printf("  ... Passed\n")
+}
+
+func TestSnapshotRecover(t *testing.T) {
+	fmt.Printf("Test: persistence with one client and snapshots ...\n")
+	GenericTest(t, "snapshot", 1, false, true, false, 1000)
+}
+
+func TestSnapshotRecoverManyClients(t *testing.T) {
+	fmt.Printf("Test: persistence with several clients and snapshots ...\n")
+	GenericTest(t, "snapshotunreliable", 20, false, true, false, 1000)
+}
+
+func TestSnapshotUnreliabled(t *testing.T) {
+	fmt.Printf("Test: persistence with several clients, snapshots, unreliable ...\n")
+	GenericTest(t, "snapshotunreliable", 5, true, false, false, 1000)
+}
+
+func TestSnapshotUnreliableRecoverd(t *testing.T) {
+	fmt.Printf("Test: persistence with several clients, failures, and snapshots, unreliable ...\n")
+	GenericTest(t, "snapshotunreliablecrash", 5, true, true, false, 1000)
+}
+
+func TestSnapshotUnreliableRecoverConcurrentPartition(t *testing.T) {
+	fmt.Printf("Test: persistence with several clients, failures, and snapshots, unreliable and partitions ...\n")
+	GenericTest(t, "snapshotunreliableconcurpartitions", 5, true, true, true, 1000)
+}
