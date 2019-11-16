@@ -1,4 +1,4 @@
-package raft
+/*package raft
 
 import (
 	"bytes"
@@ -836,9 +836,7 @@ func (rf *Raft) CompactLog(lastLogIndex int) {
 
 	rf.persist()
 }
-
-/*
-
+*/
 
 package raft
 
@@ -898,7 +896,7 @@ import "labrpc"
 // tester) on the same server, via the applyCh passed to Make().
 //
 type ApplyMsg struct {
-	Leader		bool
+	Leader      bool
 	Index       int
 	Command     interface{}
 	UseSnapshot bool   // ignore for lab2; only used in lab3
@@ -951,20 +949,9 @@ type Raft struct {
 // return CurrentTerm and whether this server
 // believes it is the leader.
 func (rf *Raft) GetState() (int, bool) {
-
-	var term int
-	var isleader bool
-	// Your code here (2A).
 	rf.mu.Lock()
-	term = rf.CurrentTerm
-	if rf.State == 2 {
-		isleader = true
-	} else {
-		isleader = false
-	}
-	rf.mu.Unlock()
-
-	return term, isleader
+	defer rf.mu.Unlock()
+	return rf.CurrentTerm, rf.State == 2
 }
 
 //
@@ -1083,14 +1070,14 @@ func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
 		rf.CurrentTerm = args.Term
 		rf.State = 0
 		//rf.previousHeartBeatTime = time.Now()
-		//fmt.Println(rf.me, " MOU ESTEILE PIO MEGALOS KAI KANW STEP DOWN, to term mou twra tha einai ", args.Term )
+		fmt.Println(rf.me, " MOU ESTEILE PIO MEGALOS KAI KANW STEP DOWN, to term mou twra tha einai ", args.Term)
 		rf.VotesFor = -1
 		rf.persist()
 	}
 	reply.Term = rf.CurrentTerm
-	////fmt.Println(": ", rf.me, " -----------------ELAVA REQUEST VOTE APO TON ", args.CandidateID, " GIA TO TERM ", args.Term, " votes for = ", rf.VotesFor)
+	fmt.Println(": ", rf.me, " -----------------ELAVA REQUEST VOTE APO TON ", args.CandidateID, " GIA TO TERM ", args.Term, " votes for = ", rf.VotesFor)
 	if ((rf.VotesFor == -1) || (rf.VotesFor == args.CandidateID)) && candidateLogIsUpToDate(args, rf) { // if server has not voted yet
-		////fmt.Println(": ", rf.me, " Psifizw sto term: ", args.Term, " ton ", args.CandidateID)
+		fmt.Println(": ", rf.me, " Psifizw sto term: ", args.Term, " ton ", args.CandidateID)
 		reply.VoteGranted = true
 		rf.lastTermToVote = args.Term
 		rf.CurrentTerm = args.Term
@@ -1130,7 +1117,6 @@ func min(x int, y int) int {
 	return y
 }
 
-
 func thereIsConflict(raft *Raft, leaderLogs []LogEntry, myLogs []LogEntry) bool {
 	for i := range myLogs {
 		if i == len(leaderLogs) {
@@ -1148,7 +1134,7 @@ func (rf *Raft) AppendEntries(args *AppendEntriesArgs, reply *AppendEntriesReply
 	//leaderCommit := args.LeaderCommit
 	rf.mu.Lock()
 	//defer rf.mu.Unlock()
-	////fmt.Println(": ", rf.me, " ELAVA APPEND APO TON LEADER TOU TERM ", args.Term, "TON ", args.LeaderId, " TO DIKO MOU TERM EINAI ", rf.CurrentTerm, "KAI TO LOGARG EINAI ", args.Entries)
+	fmt.Println(": ", rf.me, " ELAVA APPEND APO TON LEADER TOU TERM ", args.Term, "TON ", args.LeaderId, " TO DIKO MOU TERM EINAI ", rf.CurrentTerm, "KAI TO LOGARG EINAI ", args.Entries)
 	reply.Term = rf.CurrentTerm
 
 	if args.Term < rf.CurrentTerm {
@@ -1246,20 +1232,25 @@ func (rf *Raft) AppendEntries(args *AppendEntriesArgs, reply *AppendEntriesReply
 
 			rf.CommitIndex = min(args.LeaderCommit, len(rf.Log)-1)
 			//send commited changes to apply channel
-			////fmt.Println(": ", rf.me, " THA KANW COMMIT APO TO ", rf.LastApplied, " MEXRI TO ", rf.CommitIndex)
 			go func(rf *Raft) {
 				rf.mu.Lock()
 				if rf.Killed {
 					rf.mu.Unlock()
 					return
 				}
+				fmt.Println(": ", rf.me, " THA KANW COMMIT APO TO ", rf.LastApplied, " MEXRI TO ", rf.CommitIndex)
+
 				for i := rf.LastApplied + 1; i <= rf.CommitIndex; i++ {
 					var applymsg ApplyMsg
 					applymsg.Index = i
 					applymsg.Leader = false
 					applymsg.Command = rf.Log[i].Command
+					fmt.Println(rf.me, " I am ready to apply log with index: ", i, " to the state machine")
 					rf.applyChan <- applymsg
+					fmt.Println(rf.me, " I applied log with index: ", i, " to the state machine")
+
 				}
+				fmt.Println(rf.me, " I applied my logs to the state machine")
 				rf.LastApplied = rf.CommitIndex
 				rf.persist()
 				rf.mu.Unlock()
@@ -1323,7 +1314,7 @@ func (rf *Raft) sendAppendEntries(server int, args *AppendEntriesArgs, reply *Ap
 			rf.VotesFor = -1
 			////fmt.Println("EIMAI LEADER KAI EGINA FOLLOWER ------------------------------------------------")
 			rf.State = 0
-			//////fmt.Println(":", rf.me, "DEN EIMAI LEADER PIA", "TO TERM MOU EINAI ", rf.CurrentTerm, "KAPOIOS EIXE TERM: ", reply.Term)
+			fmt.Println(":", rf.me, "DEN EIMAI LEADER PIA", "TO TERM MOU EINAI ", rf.CurrentTerm, "KAPOIOS EIXE TERM: ", reply.Term)
 			//rf.previousHeartBeatTime = time.Now() //todo ksanades to
 			rf.CurrentTerm = reply.Term
 			rf.LeaderID = -1
@@ -1360,13 +1351,13 @@ func (rf *Raft) sendAppendEntries(server int, args *AppendEntriesArgs, reply *Ap
 					}
 				}
 			}
-			////fmt.Println("EXOUN TO LOG MOU: ", count, " ENW THA EPREPE ", (len(rf.peers)/2)+1)
+			fmt.Println("EXOUN TO LOG MOU: ", count, " ENW THA EPREPE ", (len(rf.peers)/2)+1)
 			//if the majority has it apply entries to state machine
 			if count > len(rf.peers)/2 {
 				rf.CommitIndex = N
 				rf.persist()
 				//commit logs
-				////fmt.Println(":", rf.me, " KANW COMMIT ENTRIES MEXRI TO: ", rf.CommitIndex)
+				fmt.Println(":", rf.me, " KANW COMMIT ENTRIES MEXRI TO: ", rf.CommitIndex)
 				go func(rf *Raft) {
 					rf.mu.Lock()
 					if rf.Killed {
@@ -1379,6 +1370,7 @@ func (rf *Raft) sendAppendEntries(server int, args *AppendEntriesArgs, reply *Ap
 						applymsg.Leader = true
 						applymsg.Command = rf.Log[i].Command
 						rf.applyChan <- applymsg
+						fmt.Println(rf.me, " I applied my logs to the state machine")
 					}
 					rf.LastApplied = rf.CommitIndex
 					rf.persist()
@@ -1475,7 +1467,7 @@ func (rf *Raft) Start(command interface{}) (int, int, bool) {
 	logentry.Command = command
 	logentry.Term = rf.CurrentTerm
 	index = len(rf.Log) // not -1 because it will increase
-	////fmt.Println("ENTRY ADDED: ===============================================================================================", logentry)
+	fmt.Println("ENTRY ADDED: ===============================================================================================", logentry)
 	rf.Log = append(rf.Log, logentry)
 	//rf.mu.Unlock()
 	//sendAppendEntriesToReplicateLog(rf)
@@ -1508,7 +1500,7 @@ func (rf *Raft) runServer() {
 	rand.Seed(time.Now().UnixNano())
 	random := rand.Intn(100)
 	rand.Seed(int64(random))
-	timeout := time.Duration(rand.Intn(200)+300) * time.Millisecond
+	timeout := time.Duration(rand.Intn(200)+600) * time.Millisecond
 	for {
 		rf.mu.Lock()
 		killed := rf.Killed
@@ -1526,7 +1518,7 @@ func (rf *Raft) runServer() {
 				//rf.mu.Lock()
 				rf.State = 1
 				rf.persist()
-				//fmt.Println(":", rf.me, "--------------EKANA TMT KAI KANW EKLOGES GIA TO TERM ", rf.CurrentTerm+1, "META APO ", timeout)
+				fmt.Println(":", rf.me, "--------------EKANA TMT KAI KANW EKLOGES GIA TO TERM ", rf.CurrentTerm+1, "META APO ", timeout)
 				rf.mu.Unlock()
 			} else {
 				rf.mu.Unlock()
@@ -1561,7 +1553,7 @@ func startElection(rf *Raft) {
 	rand.Seed(time.Now().UnixNano())
 	random := rand.Intn(100)
 	rand.Seed(int64(random))
-	timeout2 := time.Duration(rand.Intn(200)+300) * time.Millisecond
+	timeout2 := time.Duration(rand.Intn(200)+600) * time.Millisecond
 
 	//rf.mu.Unlock()
 
@@ -1588,7 +1580,7 @@ func startElection(rf *Raft) {
 			}
 
 			go func(i int, args RequestVoteArgs, reply RequestVoteReply, newVote chan vote) {
-				////fmt.Println(":", rf.me, " KAI STELNW REQUEST VOTE STON ", i, "GIA TO TERM ", rf.CurrentTerm)
+				fmt.Println(":", rf.me, " KAI STELNW REQUEST VOTE STON ", i, "GIA TO TERM ", rf.CurrentTerm)
 				if rf.sendRequestVote(i, &args, &reply) {
 					//time.Sleep(10*time.Microsecond)
 					var voteargs vote
@@ -1640,7 +1632,8 @@ func startElection(rf *Raft) {
 				rf.NextIndex = make([]int, len(rf.peers))
 				rf.MatchIndex = make([]int, len(rf.peers))
 				for j, _ := range rf.peers {
-					rf.NextIndex[j] = len(rf.Log)
+					rf.NextIndex[j] = len(rf.Log) + 1
+					rf.MatchIndex[j] = 0
 				}
 				rf.State = 2
 				rf.VotesFor = rf.me
@@ -1669,6 +1662,7 @@ func startElection(rf *Raft) {
 }
 
 func sendAppendEntries(rf *Raft) {
+
 	for i, _ := range rf.peers {
 		rf.mu.Lock()
 		if i != rf.me && rf.State == 2 {
@@ -1693,7 +1687,7 @@ func sendAppendEntries(rf *Raft) {
 			//go rf.sendAppendEntries(i, &args, &AppendEntriesReply{})
 			//////fmt.Println(":", rf.me, "ME STATE: ", rf.State, "KAI STELNW APPEND STON ", i, "GIA TO TERM ", rf.CurrentTerm, "TIME: ")
 			go func(i int, args AppendEntriesArgs, reply AppendEntriesReply) {
-				////fmt.Println(":", rf.me, "ME STATE: ", rf.State, "KAI STELNW APPEND STON ", i, "GIA TO TERM ", rf.CurrentTerm, "TIME: ")
+				fmt.Println(":", rf.me, "ME STATE: ", rf.State, "KAI STELNW APPEND STON ", i, "GIA TO TERM ", rf.CurrentTerm, "TIME: ")
 				rf.sendAppendEntries(i, &args, &reply)
 			}(i, args, reply)
 			rf.mu.Unlock()
@@ -1712,6 +1706,27 @@ func (rf *Raft) generateRandomTimeOut(min int, range_ int) time.Duration {
 	return time.Duration(rand.Intn(range_)+min) * time.Millisecond
 	//return time.Duration(rand.Intn(700-600)+600) * time.Millisecond
 }
+
+//
+//func (rf *Raft) CompactLog(lastLogIndex int) {
+//	rf.mu.Lock()
+//	defer rf.mu.Unlock()
+//
+//	if lastLogIndex > rf.CommitIndex {
+//		//RaftInfo("Failed to compact log as log index: %d is larger than commit index: %d", rf, lastLogIndex, rf.commitIndex)
+//	}
+//
+//	if i, isPresent := rf.findLogIndex(lastLogIndex); isPresent {
+//		entry := rf.log[i]
+//		rf.lastSnapshotIndex = entry.Index
+//		rf.lastSnapshotTerm = entry.Term
+//
+//		RaftInfo("Compacting log. Removing %d log entries. LastSnapshotEntry(Index: %d, Term: %d)", rf, i+1, entry.Index, entry.Term)
+//		rf.log = rf.log[i+1:]
+//	}
+//
+//	rf.persist()
+//}
 
 //
 // the service or tester wants to create a Raft server. the ports
@@ -1766,5 +1781,3 @@ func Make(peers []*labrpc.ClientEnd, me int,
 
 	return rf
 }
-
-*/

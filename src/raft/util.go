@@ -11,21 +11,21 @@ const Debug = 0
 const RPCTimeout = 50 * time.Millisecond
 const RPCMaxTries = 3
 
-func RaftInfo(format string, rf *Raft, a ...interface{}) (n int, err error) {
-	if Debug > 0 {
-		args := append([]interface{}{rf.id, rf.currentTerm, rf.state}, a...)
-		log.Printf("[INFO] Raft: [Id: %s | Term: %d | %v] "+format, args...)
-	}
-	return
-}
-
-func RaftDebug(format string, rf *Raft, a ...interface{}) (n int, err error) {
-	if Debug > 1 {
-		args := append([]interface{}{rf.id, rf.currentTerm, rf.state}, a...)
-		log.Printf("[DEBUG] Raft: [Id: %s | Term: %d | %v] "+format, args...)
-	}
-	return
-}
+//func RaftInfo(format string, rf *Raft, a ...interface{}) (n int, err error) {
+//	if Debug > 0 {
+//		args := append([]interface{}{rf.id, rf.currentTerm, rf.state}, a...)
+//		log.Printf("[INFO] Raft: [Id: %s | Term: %d | %v] "+format, args...)
+//	}
+//	return
+//}
+//
+//func RaftDebug(format string, rf *Raft, a ...interface{}) (n int, err error) {
+//	if Debug > 1 {
+//		args := append([]interface{}{rf.id, rf.currentTerm, rf.state}, a...)
+//		log.Printf("[DEBUG] Raft: [Id: %s | Term: %d | %v] "+format, args...)
+//	}
+//	return
+//}
 
 func RPCDebug(format string, svcName string, a ...interface{}) (n int, err error) {
 	if Debug > 1 {

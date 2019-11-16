@@ -1,6 +1,9 @@
 package raftkv
 
-import "testing"
+import (
+	"runtime/debug"
+	"testing"
+)
 import "strconv"
 import "time"
 import "fmt"
@@ -130,6 +133,7 @@ func partitioner(t *testing.T, cfg *config, ch chan bool, done *int32) {
 // size) shouldn't exceed 2*maxraftstate.
 func GenericTest(t *testing.T, tag string, nclients int, unreliable bool, crash bool, partitions bool, maxraftstate int) {
 	time.Sleep(time.Millisecond * 3000)
+	debug.PrintStack()
 
 	const nservers = 5
 	cfg := make_config(t, tag, nservers, unreliable, maxraftstate)
@@ -360,41 +364,40 @@ func TestOnePartition(t *testing.T) {
 	fmt.Printf("  ... Passed\n")
 }
 
-//
-//func TestManyPartitionsOneClient(t *testing.T) {
-//	fmt.Printf("Test: many partitions ...\n")
-//	GenericTest(t, "manypartitions", 1, false, false, true, -1)
-//}
-//
-//func TestManyPartitionsManyClients(t *testing.T) {
-//	fmt.Printf("Test: many partitions, many clients ...\n")
-//	GenericTest(t, "manypartitionsclnts", 5, false, false, true, -1)
-//}
-//
-//func TestPersistOneClient(t *testing.T) {
-//	fmt.Printf("Test: persistence with one client ...\n")
-//	GenericTest(t, "persistone", 1, false, true, false, -1)
-//}
-//
-//func TestPersistConcurrentt(t *testing.T) {
-//	fmt.Printf("Test: persistence with concurrent clients ...\n")
-//	GenericTest(t, "persistconcur", 5, true, true, false, -1)
-//}
-//
-//func TestPersistConcurrentUnreliable(t *testing.T) {
-//	fmt.Printf("Test: persistence with concurrent clients, unreliable ...\n")
-//	GenericTest(t, "persistconcurunreliable", 5, true, true, false, -1)
-//}
-//
-//func TestPersistPartition(t *testing.T) {
-//	fmt.Printf("Test: persistence with concurrent clients and repartitioning servers...\n")
-//	GenericTest(t, "persistpart", 5, false, true, true, -1)
-//}
-//
-//func TestPersistPartitionUnreliable(t *testing.T) {
-//	fmt.Printf("Test: persistence with concurrent clients and repartitioning servers, unreliable...\n")
-//	GenericTest(t, "persistpartunreliable", 5, true, true, true, -1)
-//}
+func TestManyPartitionsOneClient(t *testing.T) {
+	fmt.Printf("Test: many partitions ...\n")
+	GenericTest(t, "manypartitions", 1, false, false, true, -1)
+}
+
+func TestManyPartitionsManyClients(t *testing.T) {
+	fmt.Printf("Test: many partitions, many clients ...\n")
+	GenericTest(t, "manypartitionsclnts", 5, false, false, true, -1)
+}
+
+func TestPersistOneClient(t *testing.T) {
+	fmt.Printf("Test: persistence with one client ...\n")
+	GenericTest(t, "persistone", 1, false, true, false, -1)
+}
+
+func TestPersistConcurrentt(t *testing.T) {
+	fmt.Printf("Test: persistence with concurrent clients ...\n")
+	GenericTest(t, "persistconcur", 5, true, true, false, -1)
+}
+
+func TestPersistConcurrentUnreliable(t *testing.T) {
+	fmt.Printf("Test: persistence with concurrent clients, unreliable ...\n")
+	GenericTest(t, "persistconcurunreliable", 5, true, true, false, -1)
+}
+
+func TestPersistPartitionn(t *testing.T) {
+	fmt.Printf("Test: persistence with concurrent clients and repartitioning servers...\n")
+	GenericTest(t, "persistpart", 5, false, true, true, -1)
+}
+
+func TestPersistPartitionUnreliable(t *testing.T) {
+	fmt.Printf("Test: persistence with concurrent clients and repartitioning servers, unreliable...\n")
+	GenericTest(t, "persistpartunreliable", 5, true, true, true, -1)
+}
 
 //if one server falls behind, then rejoins, does it
 //recover by using the InstallSnapshot RPC?

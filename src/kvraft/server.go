@@ -33,7 +33,7 @@ func (kv *RaftKV) saveSnapshot(index int) {
 	data := w.Bytes()
 	kv.Persister.SaveSnapshot(data)
 
-	kv.rf.CompactLog(index)
+	//kv.rf.CompactLog(index)
 
 	// Compact raft log til index.
 	//kv.rf.CompactLog(logIndex)
@@ -90,11 +90,10 @@ func (kv *RaftKV) ListenerForCommitedEntries() {
 	var leader bool
 
 	for {
-
 		kv.mu.Lock()
 		killed := kv.killed
 		kv.mu.Unlock()
-		if killed && len(kv.PendingCommitedOperations) == 0 {
+		if killed {
 			return
 		}
 		select {
@@ -103,23 +102,31 @@ func (kv *RaftKV) ListenerForCommitedEntries() {
 			kv.mu.Lock()
 			killed := kv.killed
 			kv.mu.Unlock()
-			if killed && len(kv.PendingCommitedOperations) == 0 {
+			if killed {
 				return
 			}
 
-			if applyMsg.UseSnapshot {
-				kv.mu.Lock()
-				kv.ReadSnapshot(applyMsg.Snapshot)
-				kv.mu.Unlock()
-				continue
-			}
+			fmt.Println(kv.me, " kvraft received log with index:  ", applyMsg.Index)
+
+			//if applyMsg.UseSnapshot {
+			//	kv.mu.Lock()
+			//	kv.ReadSnapshot(applyMsg.Snapshot)
+			//	kv.mu.Unlock()
+			//	continue
+			//}
 
 			operation := applyMsg.Command.(Op)
+			fmt.Println(kv.me, " op ok")
+
 			index := applyMsg.Index
-			_, leader = kv.rf.GetState()
+
+			fmt.Println(kv.me, " index ok")
+
+			leader = applyMsg.Leader
+
+			fmt.Println(kv.me, " applyMessage was casted to operation with index: ", index)
 
 			kv.mu.Lock()
-			//
 			fmt.Println(kv.me, " Apply message with operation:, ", operation.Type, " for index: ", index, " arrived", "raft is leader: ", leader)
 
 			sequenceN, putExists := kv.PutAppedOperations[operation.Cid]
@@ -148,6 +155,8 @@ func (kv *RaftKV) ListenerForCommitedEntries() {
 				}
 			}
 
+			fmt.Println(kv.me, " kvraft managed all operations for log with index:  ", applyMsg.Index)
+
 			if leader {
 				ch, ok := kv.PendingCommitedOperations[index]
 				if ok {
@@ -163,6 +172,7 @@ func (kv *RaftKV) ListenerForCommitedEntries() {
 			//}
 
 			kv.mu.Unlock()
+			fmt.Println(kv.me, " kvraft finished handling log with index: ", applyMsg.Index)
 			//kv.saveSnapshot()
 
 			//rf.mu.Unlock()
@@ -211,7 +221,7 @@ func (kv *RaftKV) Get(args *GetArgs, reply *GetReply) {
 		kv.mu.Lock()
 		killed := kv.killed
 		kv.mu.Unlock()
-		if killed && len(kv.PendingCommitedOperations) == 0 {
+		if killed {
 			return
 		}
 		op := incomingMsg.Command.(Op)
@@ -274,7 +284,7 @@ func (kv *RaftKV) PutAppend(args *PutAppendArgs, reply *PutAppendReply) {
 		kv.mu.Lock()
 		killed := kv.killed
 		kv.mu.Unlock()
-		if killed && len(kv.PendingCommitedOperations) == 0 {
+		if killed {
 			return
 		}
 		fmt.Println(kv.me, " Client: ", operation.Cid, " KV PutAppend operation was applied and I received it at index: ", index)
