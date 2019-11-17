@@ -896,21 +896,35 @@ import "labrpc"
 // tester) on the same server, via the applyCh passed to Make().
 //
 type ApplyMsg struct {
-	Leader      bool
-	Index       int
-	Command     interface{}
-	UseSnapshot bool   // ignore for lab2; only used in lab3
-	Snapshot    []byte // ignore for lab2; only used in lab3
+	Leader         bool
+	Index          int
+	DeletedIndexes int
+	Command        interface{}
+	UseSnapshot    bool   // ignore for lab2; only used in lab3
+	Snapshot       []byte // ignore for lab2; only used in lab3
 }
 
 type LogEntry struct {
 	Term    int
 	Command interface{}
+	Index   int
 }
 
 type vote struct {
 	vote bool
 	term int
+}
+
+type InstallSnapshotArgs struct {
+	Term              int
+	LeaderId          string
+	LastIncludedIndex int
+	LastIncludedTerm  int
+	Data              []byte
+}
+
+type InstallSnapshotReply struct {
+	Term int
 }
 
 //
@@ -944,6 +958,10 @@ type Raft struct {
 	numberOfPeers         int
 	heartBeatTimeOut      time.Duration
 	startedElection       time.Time
+	LastSnapshotIndex     int
+	LastSnapshotTerm      int
+	DeletedIndexes        int
+	previousCompaction    int
 }
 
 // return CurrentTerm and whether this server
@@ -967,6 +985,10 @@ func (rf *Raft) persist() {
 	_ = e.Encode(rf.Log)
 	_ = e.Encode(rf.VotesFor)
 	_ = e.Encode(rf.CurrentTerm)
+	_ = e.Encode(rf.LastSnapshotIndex)
+	_ = e.Encode(rf.LastSnapshotTerm)
+	_ = e.Encode(&rf.DeletedIndexes)
+	_ = e.Encode(&rf.previousCompaction)
 
 	//_ = e.Encode(rf.State)
 	//_ = e.Encode(rf.LeaderID)
@@ -994,6 +1016,10 @@ func (rf *Raft) readPersist(data []byte) {
 	_ = d.Decode(&rf.Log)
 	_ = d.Decode(&rf.VotesFor)
 	_ = d.Decode(&rf.CurrentTerm)
+	_ = d.Decode(&rf.LastSnapshotIndex)
+	_ = d.Decode(&rf.LastSnapshotTerm)
+	_ = d.Decode(&rf.DeletedIndexes)
+	_ = d.Decode(&rf.previousCompaction)
 
 	//_ = d.Decode(&rf.State)
 	//_ = d.Decode(&rf.LeaderID)
@@ -1240,9 +1266,21 @@ func (rf *Raft) AppendEntries(args *AppendEntriesArgs, reply *AppendEntriesReply
 				}
 				fmt.Println(": ", rf.me, " THA KANW COMMIT APO TO ", rf.LastApplied, " MEXRI TO ", rf.CommitIndex)
 
+				if rf.LastApplied+rf.DeletedIndexes < rf.LastSnapshotIndex { // We need to apply latest snapshot
+					rf.mu.Unlock()
+
+					rf.applyChan <- ApplyMsg{UseSnapshot: true, Snapshot: rf.persister.ReadSnapshot()}
+
+					rf.mu.Lock()
+					rf.LastApplied = rf.LastSnapshotIndex
+					rf.mu.Unlock()
+					return
+				}
+
 				for i := rf.LastApplied + 1; i <= rf.CommitIndex; i++ {
 					var applymsg ApplyMsg
 					applymsg.Index = i
+					applymsg.DeletedIndexes = rf.DeletedIndexes
 					applymsg.Leader = false
 					applymsg.Command = rf.Log[i].Command
 					fmt.Println(rf.me, " I am ready to apply log with index: ", i, " to the state machine")
@@ -1364,10 +1402,23 @@ func (rf *Raft) sendAppendEntries(server int, args *AppendEntriesArgs, reply *Ap
 						rf.mu.Unlock()
 						return
 					}
+
+					if rf.LastApplied+rf.DeletedIndexes < rf.LastSnapshotIndex { // We need to apply latest snapshot
+						rf.mu.Unlock()
+
+						rf.applyChan <- ApplyMsg{UseSnapshot: true, Snapshot: rf.persister.ReadSnapshot()}
+
+						rf.mu.Lock()
+						rf.LastApplied = rf.LastSnapshotIndex
+						rf.mu.Unlock()
+						return
+					}
+
 					for i := rf.LastApplied + 1; i <= rf.CommitIndex; i++ {
 						var applymsg ApplyMsg
 						applymsg.Index = i
 						applymsg.Leader = true
+						applymsg.DeletedIndexes = rf.DeletedIndexes
 						applymsg.Command = rf.Log[i].Command
 						rf.applyChan <- applymsg
 						fmt.Println(rf.me, " I applied my logs to the state machine")
@@ -1680,6 +1731,12 @@ func sendAppendEntries(rf *Raft) {
 				}
 
 				if len(rf.Log)-1 >= rf.NextIndex[i] { //&& rf.NextIndex[i] >= 0 {
+					//needs snapshot
+					if rf.NextIndex[i]+rf.DeletedIndexes <= rf.LastSnapshotIndex {
+						rf.sendSnapshot(i)
+						return
+					}
+					//rf.sendSnapshot(i)
 					args.Entries = rf.Log[rf.NextIndex[i]:]
 				}
 			}
@@ -1697,14 +1754,113 @@ func sendAppendEntries(rf *Raft) {
 	}
 }
 
-func (rf *Raft) generateRandomTimeOut(min int, range_ int) time.Duration {
-	rand.Seed(time.Now().UnixNano())
-	//for{
-	//	////fmt.Println(time.Duration(rand.Intn(range_) + min)*time.Millisecond)
+func (rf *Raft) findLogIndex(logIndex int) int {
+	fmt.Println(rf.me, "Index transformation will execute: ", logIndex, " - ", rf.DeletedIndexes)
+	return logIndex - rf.DeletedIndexes
+}
+
+func (rf *Raft) CompactLog(lastLogIndex int) {
+	if lastLogIndex == -1 {
+		return
+	}
+	rf.mu.Lock()
+	defer rf.mu.Unlock()
+
+	if (len(rf.Log) + rf.DeletedIndexes) > lastLogIndex {
+		if (rf.previousCompaction != lastLogIndex) && len(rf.Log) > 0 {
+
+			fmt.Println(rf.me, "The log has size:  ", len(rf.Log), " Log is: ", rf.Log)
+
+			rf.LastSnapshotIndex = lastLogIndex
+			fmt.Println(rf.me, " ", lastLogIndex, " means : ", rf.findLogIndex(lastLogIndex))
+
+			rf.LastSnapshotTerm = rf.Log[rf.findLogIndex(lastLogIndex)].Term
+
+			lenBeforeCompaction := len(rf.Log)
+			rf.Log = rf.Log[rf.findLogIndex(lastLogIndex)+1:]
+			lenAfterCompaction := len(rf.Log)
+			difference := lenBeforeCompaction - lenAfterCompaction
+			fmt.Println(rf.me, " Deleting: ", difference, " entries from the log")
+			rf.DeletedIndexes += difference
+			fmt.Println(rf.me, " Length before compaction was: ", lenBeforeCompaction, " and now is: ", lenAfterCompaction)
+
+			rf.previousCompaction = lastLogIndex
+		}
+	}
+
+	rf.persist()
+}
+
+// InstallSnapshot - RPC function
+func (rf *Raft) InstallSnapshot(args *InstallSnapshotArgs, reply *InstallSnapshotReply) {
+	rf.mu.Lock()
+	defer rf.mu.Unlock()
+
+	reply.Term = rf.CurrentTerm
+	if args.Term < rf.CurrentTerm {
+		return
+	} else if args.Term >= rf.CurrentTerm {
+		rf.State = 0
+		//rf.previousHeartBeatTime = time.Now()
+		rf.VotesFor = -1
+		//rf.LeaderID = args.LeaderId
+	}
+
+	rf.previousHeartBeatTime = time.Now()
+
+	rf.persister.SaveSnapshot(args.Data) // Save snapshot, discarding any existing snapshot with smaller index
+
+	i := rf.findLogIndex(args.LastIncludedIndex)
+	if rf.Log[i].Term == args.LastIncludedTerm {
+		// If existing log entry has same index and term as snapshot’s last included entry, retain log entries following it
+		rf.Log = rf.Log[i+1:]
+	} else { // Otherwise discard the entire log
+		rf.Log = make([]LogEntry, 0)
+	}
+
+	rf.LastSnapshotIndex = args.LastIncludedIndex
+	rf.LastSnapshotTerm = args.LastIncludedTerm
+	rf.LastApplied = 0 // LocalApplyProcess will pick this change up and send snapshot
+
+	rf.persist()
+
+	fmt.Println("Snapshot was installed")
+
+}
+
+func (rf *Raft) sendSnapshot(peerIndex int) {
+	rf.mu.Lock()
+
+	peer := rf.peers[peerIndex]
+	args := InstallSnapshotArgs{
+		Term:              rf.CurrentTerm,
+		LastIncludedIndex: rf.LastSnapshotIndex,
+		LastIncludedTerm:  rf.LastSnapshotTerm,
+		Data:              rf.persister.ReadSnapshot(),
+	}
+	reply := InstallSnapshotReply{}
+
+	rf.mu.Unlock()
+
+	// Send RPC (with timeouts + retries)
+	//requestName := "Raft.InstallSnapshot"
+	//request := func() bool {
+	//	return peer.Call(requestName, &args, &reply)
 	//}
-	//////fmt.Println(time.Duration(rand.Intn(100) + min)*time.Millisecond , " EDW")
-	return time.Duration(rand.Intn(range_)+min) * time.Millisecond
-	//return time.Duration(rand.Intn(700-600)+600) * time.Millisecond
+	ok := peer.Call("Raft.InstallSnapshot", args, reply)
+
+	rf.mu.Lock()
+	defer rf.mu.Unlock()
+	if ok {
+		if reply.Term > rf.CurrentTerm {
+			rf.State = 0
+			rf.VotesFor = -1
+		} else {
+			rf.NextIndex[peerIndex] = rf.findLogIndex(args.LastIncludedIndex + 1)
+		}
+	}
+
+	//sendAppendChan <- struct{}{} // Signal to leader-peer process that there may be appends to send
 }
 
 //
@@ -1727,6 +1883,16 @@ func (rf *Raft) generateRandomTimeOut(min int, range_ int) time.Duration {
 //
 //	rf.persist()
 //}
+
+func (rf *Raft) generateRandomTimeOut(min int, range_ int) time.Duration {
+	rand.Seed(time.Now().UnixNano())
+	//for{
+	//	////fmt.Println(time.Duration(rand.Intn(range_) + min)*time.Millisecond)
+	//}
+	//////fmt.Println(time.Duration(rand.Intn(100) + min)*time.Millisecond , " EDW")
+	return time.Duration(rand.Intn(range_)+min) * time.Millisecond
+	//return time.Duration(rand.Intn(700-600)+600) * time.Millisecond
+}
 
 //
 // the service or tester wants to create a Raft server. the ports
@@ -1762,6 +1928,10 @@ func Make(peers []*labrpc.ClientEnd, me int,
 	rf.LeaderID = -1
 	rf.applyChan = applyCh
 	rf.lastTermToVote = -1
+	rf.LastSnapshotIndex = -1
+	rf.LastSnapshotTerm = 0
+	rf.DeletedIndexes = 0
+	rf.previousCompaction = -1
 	rf.electionStarted = -1
 	rf.numberOfPeers = len(peers)
 	//range

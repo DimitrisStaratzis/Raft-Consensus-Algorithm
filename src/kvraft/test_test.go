@@ -21,6 +21,7 @@ func check(t *testing.T, ck *Clerk, key string, value string) {
 	if v != value {
 		t.Fatalf("Get(%v): expected:\n%v\nreceived:\n%v", key, value, v)
 	}
+	fmt.Printf("  ... Passedcheck\n")
 }
 
 // a client runs the function f and then signals it is done
@@ -417,12 +418,16 @@ func TestSnapshotRPC(t *testing.T) {
 	ck.Put("a", "A")
 	check(t, ck, "a", "A")
 
+	fmt.Printf("  ... PassedFirst\n")
+
 	// a bunch of puts into the majority partition.
 	cfg.partition([]int{0, 1}, []int{2})
 	{
 		ck1 := cfg.makeClient([]int{0, 1})
-		for i := 0; i < 50; i++ {
+		for i := 0; i < 25; i++ {
 			ck1.Put(strconv.Itoa(i), strconv.Itoa(i))
+			fmt.Println("///////////////////PUT : ", i)
+
 		}
 		time.Sleep(electionTimeout)
 		ck1.Put("b", "B")
@@ -434,6 +439,8 @@ func TestSnapshotRPC(t *testing.T) {
 		t.Fatalf("logs were not trimmed (%v > 2*%v)", cfg.LogSize(), maxraftstate)
 	}
 
+	fmt.Printf("  ... PassedSecond\n")
+
 	// now make group that requires participation of
 	// lagging server, so that it has to catch up.
 	cfg.partition([]int{0, 2}, []int{1})
@@ -444,7 +451,7 @@ func TestSnapshotRPC(t *testing.T) {
 		check(t, ck1, "a", "A")
 		check(t, ck1, "b", "B")
 		check(t, ck1, "1", "1")
-		check(t, ck1, "49", "49")
+		check(t, ck1, "20", "20")
 	}
 
 	// now everybody

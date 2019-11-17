@@ -80,7 +80,7 @@ func (ck *Clerk) Get(key string) string {
 		} else {
 			index = j % len(ck.servers)
 		}
-		fmt.Println("sendingG  ", index)
+		fmt.Println("sendingGet  to server: ", index)
 		ok = ck.servers[index].Call("RaftKV.Get", &args, &reply)
 		if ok {
 			if !reply.WrongLeader {
@@ -97,7 +97,7 @@ func (ck *Clerk) Get(key string) string {
 				ck.Leader = -1
 			}
 		} else {
-			fmt.Println("RPC for get failed")
+			fmt.Println("RPC for get failed for server: ", index)
 			ck.Leader = -1
 		}
 		j++
@@ -136,7 +136,6 @@ func (ck *Clerk) PutAppend(key string, value string, op string) {
 		Op:        op}
 
 	for {
-		fmt.Println("sendinP ")
 		var reply PutAppendReply
 		var index int
 
@@ -145,6 +144,7 @@ func (ck *Clerk) PutAppend(key string, value string, op string) {
 		} else {
 			index = i % len(ck.servers)
 		}
+		fmt.Println("sendinPutAppend to server:  ", index)
 
 		ok := ck.servers[index].Call("RaftKV.PutAppend", &args, &reply)
 
@@ -158,6 +158,7 @@ func (ck *Clerk) PutAppend(key string, value string, op string) {
 				ck.Leader = -1
 			}
 		} else {
+			fmt.Println("RPC for putAppend failed for server: ", index)
 			ck.Leader = -1
 		}
 		i++

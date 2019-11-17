@@ -33,7 +33,12 @@ func (kv *RaftKV) saveSnapshot(index int) {
 	data := w.Bytes()
 	kv.Persister.SaveSnapshot(data)
 
-	//kv.rf.CompactLog(index)
+	if 1-(kv.Persister.RaftStateSize()/kv.maxraftstate) <= 5/100 {
+		fmt.Println(kv.me, " Compacting my log until index: ", index)
+
+		kv.rf.CompactLog(index - 1)
+
+	}
 
 	// Compact raft log til index.
 	//kv.rf.CompactLog(logIndex)
@@ -108,17 +113,18 @@ func (kv *RaftKV) ListenerForCommitedEntries() {
 
 			fmt.Println(kv.me, " kvraft received log with index:  ", applyMsg.Index)
 
-			//if applyMsg.UseSnapshot {
-			//	kv.mu.Lock()
-			//	kv.ReadSnapshot(applyMsg.Snapshot)
-			//	kv.mu.Unlock()
-			//	continue
-			//}
+			if applyMsg.UseSnapshot {
+				kv.mu.Lock()
+				kv.ReadSnapshot(applyMsg.Snapshot)
+				kv.mu.Unlock()
+				continue
+			}
 
 			operation := applyMsg.Command.(Op)
 			fmt.Println(kv.me, " op ok")
 
 			index := applyMsg.Index
+			deletedIndexes := applyMsg.DeletedIndexes
 
 			fmt.Println(kv.me, " index ok")
 
@@ -158,7 +164,7 @@ func (kv *RaftKV) ListenerForCommitedEntries() {
 			fmt.Println(kv.me, " kvraft managed all operations for log with index:  ", applyMsg.Index)
 
 			if leader {
-				ch, ok := kv.PendingCommitedOperations[index]
+				ch, ok := kv.PendingCommitedOperations[index+deletedIndexes]
 				if ok {
 					fmt.Println(kv.me, " Client: ", operation.Cid, " Got channel for index: ", index, " and operation:  ", operation.Type)
 					ch <- applyMsg
@@ -168,7 +174,10 @@ func (kv *RaftKV) ListenerForCommitedEntries() {
 			}
 
 			//if kv.snapshotsEnabled && 1-(kv.Persister.RaftStateSize()/kv.maxraftstate) <= 5/100 {
-			kv.saveSnapshot(applyMsg.Index)
+			if kv.maxraftstate != -1 {
+				kv.saveSnapshot(applyMsg.Index + applyMsg.DeletedIndexes)
+
+			}
 			//}
 
 			kv.mu.Unlock()
@@ -244,7 +253,7 @@ func (kv *RaftKV) Get(args *GetArgs, reply *GetReply) {
 
 			return
 		}
-	case <-time.After(2000 * time.Millisecond):
+	case <-time.After(800 * time.Millisecond):
 		fmt.Println(kv.me, " Client: ", operation.Cid, " get expired for key: ", args.Key)
 		reply.WrongLeader = true
 		kv.mu.Lock()
@@ -299,7 +308,7 @@ func (kv *RaftKV) PutAppend(args *PutAppendArgs, reply *PutAppendReply) {
 			return
 		}
 
-	case <-time.After(2000 * time.Millisecond):
+	case <-time.After(800 * time.Millisecond):
 		//
 		fmt.Println(kv.me, " Client: ", operation.Cid, " putAppend expired for key: ", args.Key, " and value: ", args.Value)
 		reply.WrongLeader = true
