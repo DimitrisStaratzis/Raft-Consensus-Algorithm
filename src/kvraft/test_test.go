@@ -424,7 +424,7 @@ func TestSnapshotRPC(t *testing.T) {
 	cfg.partition([]int{0, 1}, []int{2})
 	{
 		ck1 := cfg.makeClient([]int{0, 1})
-		for i := 0; i < 25; i++ {
+		for i := 0; i < 50; i++ {
 			ck1.Put(strconv.Itoa(i), strconv.Itoa(i))
 			fmt.Println("///////////////////PUT : ", i)
 
@@ -451,7 +451,7 @@ func TestSnapshotRPC(t *testing.T) {
 		check(t, ck1, "a", "A")
 		check(t, ck1, "b", "B")
 		check(t, ck1, "1", "1")
-		check(t, ck1, "20", "20")
+		check(t, ck1, "49", "49")
 	}
 
 	// now everybody
@@ -465,7 +465,7 @@ func TestSnapshotRPC(t *testing.T) {
 	fmt.Printf("  ... Passed\n")
 }
 
-func TestSnapshotRecover(t *testing.T) {
+func TestSnapshotRecoverr(t *testing.T) {
 	fmt.Printf("Test: persistence with one client and snapshots ...\n")
 	GenericTest(t, "snapshot", 1, false, true, false, 1000)
 }

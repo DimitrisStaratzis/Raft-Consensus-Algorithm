@@ -1083,12 +1083,17 @@ type AppendEntriesReply struct {
 
 func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
 	// Your code here (2A, 2B).
+	fmt.Println(": ", rf.me, " -----------------ELAVA REQUEST VOTE APO TON ", args.CandidateID, " GIA TO TERM ", args.Term, " votes for = ", rf.VotesFor)
 	rf.mu.Lock()
 	defer rf.mu.Unlock()
 	// Do not grant vote if term < CurrentTerm
+
+	fmt.Println(": ", rf.me, "REQUEST VOTE PEREASA TO PRWTO LOCK GIA TO TERM ", args.Term, " votes for = ", rf.VotesFor)
+
 	if args.Term < rf.CurrentTerm {
 		reply.VoteGranted = false
 		reply.Term = rf.CurrentTerm
+		fmt.Println(": ", rf.me, "COMPLETED REQUEST VOTE APO TON ", args.CandidateID, " GIA TO TERM ", args.Term, " FINISHED", rf.VotesFor)
 		return
 	}
 
@@ -1098,10 +1103,9 @@ func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
 		//rf.previousHeartBeatTime = time.Now()
 		fmt.Println(rf.me, " MOU ESTEILE PIO MEGALOS KAI KANW STEP DOWN, to term mou twra tha einai ", args.Term)
 		rf.VotesFor = -1
-		rf.persist()
+		//rf.persist()
 	}
 	reply.Term = rf.CurrentTerm
-	fmt.Println(": ", rf.me, " -----------------ELAVA REQUEST VOTE APO TON ", args.CandidateID, " GIA TO TERM ", args.Term, " votes for = ", rf.VotesFor)
 	if ((rf.VotesFor == -1) || (rf.VotesFor == args.CandidateID)) && candidateLogIsUpToDate(args, rf) { // if server has not voted yet
 		fmt.Println(": ", rf.me, " Psifizw sto term: ", args.Term, " ton ", args.CandidateID)
 		reply.VoteGranted = true
@@ -1109,7 +1113,7 @@ func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
 		rf.CurrentTerm = args.Term
 		rf.VotesFor = args.CandidateID
 		rf.previousHeartBeatTime = time.Now()
-		rf.persist()
+		//rf.persist()
 
 		//////fmt.Print(" ton ", args.CandidateID)
 
@@ -1121,8 +1125,12 @@ func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
 	} else {
 		////fmt.Println(": ", rf.me, " den psifizw sto term: ", args.Term, " ton ", args.CandidateID)
 		reply.VoteGranted = false
+		fmt.Println(": ", rf.me, "REQUEST VOTE EIMAI STO ELSE ", args.Term, " votes for = ", rf.VotesFor)
+
 	}
-	//rf.persist()
+	fmt.Println(": ", rf.me, "COMPLETED REQUEST VOTE APO TON ", args.CandidateID, " GIA TO TERM ", args.Term, " FINISHED", rf.VotesFor)
+
+	rf.persist()
 }
 
 func candidateLogIsUpToDate(args *RequestVoteArgs, rf *Raft) bool {
@@ -1159,6 +1167,7 @@ func (rf *Raft) AppendEntries(args *AppendEntriesArgs, reply *AppendEntriesReply
 	// Your code here (2A, 2B).
 	//leaderCommit := args.LeaderCommit
 	rf.mu.Lock()
+	defer rf.mu.Unlock()
 	//defer rf.mu.Unlock()
 	fmt.Println(": ", rf.me, " ELAVA APPEND APO TON LEADER TOU TERM ", args.Term, "TON ", args.LeaderId, " TO DIKO MOU TERM EINAI ", rf.CurrentTerm, "KAI TO LOGARG EINAI ", args.Entries)
 	reply.Term = rf.CurrentTerm
@@ -1166,7 +1175,7 @@ func (rf *Raft) AppendEntries(args *AppendEntriesArgs, reply *AppendEntriesReply
 	if args.Term < rf.CurrentTerm {
 		reply.Success = false
 		reply.firstIndexOfConflictingTerm = len(rf.Log)
-		rf.mu.Unlock()
+		//rf.mu.Unlock()
 	} else if args.Term >= rf.CurrentTerm {
 		reply.Success = true
 		rf.CurrentTerm = args.Term
@@ -1189,7 +1198,9 @@ func (rf *Raft) AppendEntries(args *AppendEntriesArgs, reply *AppendEntriesReply
 			reply.Success = false
 			reply.firstIndexOfConflictingTerm = len(rf.Log)
 			rf.persist()
-			rf.mu.Unlock()
+			//rf.mu.Unlock()
+			fmt.Println(": ", rf.me, " TELEIWSA TO APPEND APO TON LEADER TOU TERM ", args.Term, "TON ", args.LeaderId, " TO DIKO MOU TERM EINAI ", rf.CurrentTerm, "KAI TO LOGARG EINAI ", args.Entries)
+
 			return
 		}
 
@@ -1211,28 +1222,15 @@ func (rf *Raft) AppendEntries(args *AppendEntriesArgs, reply *AppendEntriesReply
 				}
 
 				rf.persist()
-				rf.mu.Unlock()
 				//rf.mu.Unlock()
+				//rf.mu.Unlock()
+				fmt.Println(": ", rf.me, " TELEIWSA TO APPEND APO TON LEADER TOU TERM ", args.Term, "TON ", args.LeaderId, " TO DIKO MOU TERM EINAI ", rf.CurrentTerm, "KAI TO LOGARG EINAI ", args.Entries)
+
 				return
 			}
 		}
 		rf.previousHeartBeatTime = time.Now()
 
-		////fmt.Println("\n\n\n\n\n: ", rf.me, " TO PALIO MOU LOG EINAI: ")
-		//for i := 0; i < len(rf.Log); i++ {
-		//	////fmt.Println("			", rf.Log[i], " ENTRY")
-		//}
-		//
-		//////fmt.Println(": ", rf.me, " MOU ESTEILAN TO LOG: me prevlogindex :", args.PrevLogIndex)
-		//for i := 0; i < len(args.Entries); i++ {
-		//	////fmt.Println("			", args.Entries[i], " ENTRY")
-		//}
-		//If an existing entry conflicts with a new one (same index
-		//but different terms), delete the existing entry and all that
-		//follow it
-		////fmt.Println(":", rf.me, " I COMMITED THE ENTRIES FROM LEADER: ", args.LeaderId)
-		//reply.Success = true// we will fix everything dont worry
-		//if len(rf.Log) > 0{
 		logsToCompare := rf.Log[args.PrevLogIndex+1:]
 		if thereIsConflict(rf, args.Entries, logsToCompare) || len(logsToCompare) < len(args.Entries) {
 			////fmt.Println("EIXAME CONFLICT")
@@ -1242,18 +1240,7 @@ func (rf *Raft) AppendEntries(args *AppendEntriesArgs, reply *AppendEntriesReply
 			//rf.Log = append(rf.Log, args.Entries...)
 		}
 		rf.previousHeartBeatTime = time.Now()
-		//}else{
-		//	rf.Log = append(rf.Log, args.Entries...)
-		//}
 
-		////fmt.Println(": ", rf.me, " TO NEO MOU LOG EINAI: ")
-		//for i := 0; i < len(rf.Log); i++ {
-		//	////fmt.Println("			", rf.Log[i], " ENTRY")
-		//}
-		//rf.previousHeartBeatTime = time.Now()
-
-		//If leaderCommit > CommitIndex, set CommitIndex =
-		//min(leaderCommit, index of last new entry)
 		if args.LeaderCommit > rf.CommitIndex {
 
 			rf.CommitIndex = min(args.LeaderCommit, len(rf.Log)-1)
@@ -1283,22 +1270,25 @@ func (rf *Raft) AppendEntries(args *AppendEntriesArgs, reply *AppendEntriesReply
 					applymsg.DeletedIndexes = rf.DeletedIndexes
 					applymsg.Leader = false
 					applymsg.Command = rf.Log[i].Command
-					fmt.Println(rf.me, " I am ready to apply log with index: ", i, " to the state machine")
+					fmt.Println(rf.me, " I am ready to apply log with index: ", i+rf.DeletedIndexes, " to the state machine")
 					rf.applyChan <- applymsg
-					fmt.Println(rf.me, " I applied log with index: ", i, " to the state machine")
+					fmt.Println(rf.me, " I applied log with index: ", i+rf.DeletedIndexes, " to the state machine")
 
 				}
 				fmt.Println(rf.me, " I applied my logs to the state machine")
 				rf.LastApplied = rf.CommitIndex
-				rf.persist()
 				rf.mu.Unlock()
+				rf.persist()
+
 			}(rf)
 
 		}
 		rf.previousHeartBeatTime = time.Now()
 		rf.persist()
-		rf.mu.Unlock()
+
 	}
+	fmt.Println(": ", rf.me, " TELEIWSA TO APPEND APO TON LEADER TOU TERM ", args.Term, "TON ", args.LeaderId, " TO DIKO MOU TERM EINAI ", rf.CurrentTerm, "KAI TO LOGARG EINAI ", args.Entries)
+
 }
 
 //func thereIsConflict(raft *Raft) bool {
@@ -1379,6 +1369,8 @@ func (rf *Raft) sendAppendEntries(server int, args *AppendEntriesArgs, reply *Ap
 		}
 
 		//search all entries from last to commit index.
+		fmt.Println(rf.me, "Will check whethe the majority of other servers have a log: commitIndex =", rf.CommitIndex, " Last log entry index = ", len(rf.Log)-1)
+
 		for N := len(rf.Log) - 1; rf.CommitIndex < N; N-- {
 			count := 1
 			//if equal terms check if if the majority has it
@@ -1395,7 +1387,7 @@ func (rf *Raft) sendAppendEntries(server int, args *AppendEntriesArgs, reply *Ap
 				rf.CommitIndex = N
 				rf.persist()
 				//commit logs
-				fmt.Println(":", rf.me, " KANW COMMIT ENTRIES MEXRI TO: ", rf.CommitIndex)
+				fmt.Println(":", rf.me, " KANW COMMIT ENTRIES MEXRI TO: ", rf.CommitIndex+rf.DeletedIndexes)
 				go func(rf *Raft) {
 					rf.mu.Lock()
 					if rf.Killed {
@@ -1510,15 +1502,15 @@ func (rf *Raft) Start(command interface{}) (int, int, bool) {
 
 	//rf.mu.Lock()
 	if rf.State != 2 {
-		return index, term, false
+		return rf.DeletedIndexes + index, term, false
 	}
 
 	// Your code here (2B).
 	var logentry LogEntry
 	logentry.Command = command
 	logentry.Term = rf.CurrentTerm
-	index = len(rf.Log) // not -1 because it will increase
-	fmt.Println("ENTRY ADDED: ===============================================================================================", logentry)
+	index = len(rf.Log) + rf.DeletedIndexes // not -1 because it will increase
+	fmt.Println("ENTRY ADDED: ===============================================================================================", logentry, " at index:", index)
 	rf.Log = append(rf.Log, logentry)
 	//rf.mu.Unlock()
 	//sendAppendEntriesToReplicateLog(rf)
@@ -1541,9 +1533,8 @@ func (rf *Raft) Start(command interface{}) (int, int, bool) {
 func (rf *Raft) Kill() {
 	// Your code here, if desired.
 	rf.mu.Lock()
+	defer rf.mu.Unlock()
 	rf.Killed = true
-	//rf.persist()
-	rf.mu.Unlock()
 }
 
 func (rf *Raft) runServer() {
@@ -1652,8 +1643,8 @@ func startElection(rf *Raft) {
 						rf.State = 0
 						//rf.previousHeartBeatTime = time.Now()
 						rf.VotesFor = -1
-						rf.mu.Unlock()
 						rf.persist()
+						rf.mu.Unlock()
 					}
 				} else {
 					//did not receive vote maybe server is down
@@ -1699,14 +1690,12 @@ func startElection(rf *Raft) {
 			//rf.mu.Unlock()
 		default:
 			rf.mu.Lock()
-			//////fmt.Println(timeout2, " ELA RE MALAKA")
-			if time.Now().Sub(rf.startedElection) > timeout2 { //rf.generateRandomTimeOut(500, 300) {
+			strtEl := rf.startedElection
+			rf.mu.Unlock()
+			if time.Now().Sub(strtEl) > timeout2 { //rf.generateRandomTimeOut(500, 300) {
 				votesReceived = 0
-				rf.mu.Unlock()
 				VOTING_NOW = false
 				break
-			} else {
-				rf.mu.Unlock()
 			}
 		}
 	}
@@ -1785,6 +1774,32 @@ func (rf *Raft) CompactLog(lastLogIndex int) {
 			fmt.Println(rf.me, " Length before compaction was: ", lenBeforeCompaction, " and now is: ", lenAfterCompaction)
 
 			rf.previousCompaction = lastLogIndex
+
+			if (rf.CommitIndex - rf.DeletedIndexes) >= 0 {
+				rf.CommitIndex -= rf.DeletedIndexes
+			} else {
+				rf.CommitIndex = 0
+			}
+
+			if (rf.LastApplied - rf.DeletedIndexes) >= 0 {
+				rf.LastApplied -= rf.DeletedIndexes
+			} else {
+				rf.CommitIndex = 0
+			}
+
+			for i, _ := range rf.peers {
+				fmt.Println("OUT: ", i, " len is: ", len(rf.peers))
+				if (rf.MatchIndex[i] - rf.DeletedIndexes) >= 0 {
+					rf.MatchIndex[i] -= rf.DeletedIndexes
+				} else {
+					rf.MatchIndex[i] = 0
+				}
+				if (rf.NextIndex[i] - rf.DeletedIndexes) >= 0 {
+					rf.NextIndex[i] -= rf.DeletedIndexes
+				} else {
+					rf.NextIndex[i] = 0
+				}
+			}
 		}
 	}
 
@@ -1859,30 +1874,7 @@ func (rf *Raft) sendSnapshot(peerIndex int) {
 			rf.NextIndex[peerIndex] = rf.findLogIndex(args.LastIncludedIndex + 1)
 		}
 	}
-
-	//sendAppendChan <- struct{}{} // Signal to leader-peer process that there may be appends to send
 }
-
-//
-//func (rf *Raft) CompactLog(lastLogIndex int) {
-//	rf.mu.Lock()
-//	defer rf.mu.Unlock()
-//
-//	if lastLogIndex > rf.CommitIndex {
-//		//RaftInfo("Failed to compact log as log index: %d is larger than commit index: %d", rf, lastLogIndex, rf.commitIndex)
-//	}
-//
-//	if i, isPresent := rf.findLogIndex(lastLogIndex); isPresent {
-//		entry := rf.log[i]
-//		rf.lastSnapshotIndex = entry.Index
-//		rf.lastSnapshotTerm = entry.Term
-//
-//		RaftInfo("Compacting log. Removing %d log entries. LastSnapshotEntry(Index: %d, Term: %d)", rf, i+1, entry.Index, entry.Term)
-//		rf.log = rf.log[i+1:]
-//	}
-//
-//	rf.persist()
-//}
 
 func (rf *Raft) generateRandomTimeOut(min int, range_ int) time.Duration {
 	rand.Seed(time.Now().UnixNano())
@@ -1934,6 +1926,8 @@ func Make(peers []*labrpc.ClientEnd, me int,
 	rf.previousCompaction = -1
 	rf.electionStarted = -1
 	rf.numberOfPeers = len(peers)
+	rf.NextIndex = make([]int, len(rf.peers))
+	rf.MatchIndex = make([]int, len(rf.peers))
 	//range
 	//minHeartbeat := 600
 	//maxHeartbeat := 800

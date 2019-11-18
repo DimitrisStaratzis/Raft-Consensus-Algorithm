@@ -3,7 +3,7 @@ package raftkv
 import (
 	"crypto/rand"
 	"fmt"
-	"time"
+	//"time"
 
 	//"go/ast"
 	"labrpc"
@@ -101,7 +101,7 @@ func (ck *Clerk) Get(key string) string {
 			ck.Leader = -1
 		}
 		j++
-		time.Sleep(10 * time.Millisecond)
+		//time.Sleep(10 * time.Millisecond)
 
 	}
 	return ""
@@ -162,7 +162,7 @@ func (ck *Clerk) PutAppend(key string, value string, op string) {
 			ck.Leader = -1
 		}
 		i++
-		time.Sleep(10 * time.Millisecond)
+		//time.Sleep(10 * time.Millisecond)
 
 	}
 }

@@ -33,11 +33,13 @@ func (kv *RaftKV) saveSnapshot(index int) {
 	data := w.Bytes()
 	kv.Persister.SaveSnapshot(data)
 
-	if 1-(kv.Persister.RaftStateSize()/kv.maxraftstate) <= 5/100 {
-		fmt.Println(kv.me, " Compacting my log until index: ", index)
+	if kv.maxraftstate != -1 {
+		if 1-(kv.Persister.RaftStateSize()/kv.maxraftstate) <= 5/100 {
+			fmt.Println(kv.me, " Compacting my log until index: ", index)
 
-		kv.rf.CompactLog(index - 1)
+			kv.rf.CompactLog(index)
 
+		}
 	}
 
 	// Compact raft log til index.
@@ -125,12 +127,13 @@ func (kv *RaftKV) ListenerForCommitedEntries() {
 
 			index := applyMsg.Index
 			deletedIndexes := applyMsg.DeletedIndexes
+			index += deletedIndexes
 
 			fmt.Println(kv.me, " index ok")
 
 			leader = applyMsg.Leader
 
-			fmt.Println(kv.me, " applyMessage was casted to operation with index: ", index)
+			//fmt.Println(kv.me, " applyMessage was casted to operation with index: ", index)
 
 			kv.mu.Lock()
 			fmt.Println(kv.me, " Apply message with operation:, ", operation.Type, " for index: ", index, " arrived", "raft is leader: ", leader)
@@ -161,10 +164,10 @@ func (kv *RaftKV) ListenerForCommitedEntries() {
 				}
 			}
 
-			fmt.Println(kv.me, " kvraft managed all operations for log with index:  ", applyMsg.Index)
+			fmt.Println(kv.me, " kvraft managed all operations for log with index:  ", index)
 
 			if leader {
-				ch, ok := kv.PendingCommitedOperations[index+deletedIndexes]
+				ch, ok := kv.PendingCommitedOperations[index]
 				if ok {
 					fmt.Println(kv.me, " Client: ", operation.Cid, " Got channel for index: ", index, " and operation:  ", operation.Type)
 					ch <- applyMsg
@@ -173,18 +176,14 @@ func (kv *RaftKV) ListenerForCommitedEntries() {
 				}
 			}
 
-			//if kv.snapshotsEnabled && 1-(kv.Persister.RaftStateSize()/kv.maxraftstate) <= 5/100 {
-			if kv.maxraftstate != -1 {
-				kv.saveSnapshot(applyMsg.Index + applyMsg.DeletedIndexes)
-
-			}
-			//}
-
 			kv.mu.Unlock()
-			fmt.Println(kv.me, " kvraft finished handling log with index: ", applyMsg.Index)
+
+			kv.saveSnapshot(index)
+
+			//}
+			fmt.Println(kv.me, " kvraft finished handling log with index: ", index)
 			//kv.saveSnapshot()
 
-			//rf.mu.Unlock()
 		default:
 			//if leader{
 			//	//
@@ -213,7 +212,7 @@ func (kv *RaftKV) Get(args *GetArgs, reply *GetReply) {
 		reply.WrongLeader = true
 		return
 	}
-	reply.WrongLeader = false
+	//reply.WrongLeader = false
 
 	fmt.Println(kv.me, " Client: ", operation.Cid, " KV sent get with key: ", operation.Key)
 
@@ -231,6 +230,7 @@ func (kv *RaftKV) Get(args *GetArgs, reply *GetReply) {
 		killed := kv.killed
 		kv.mu.Unlock()
 		if killed {
+			reply.WrongLeader = true
 			return
 		}
 		op := incomingMsg.Command.(Op)
@@ -239,6 +239,7 @@ func (kv *RaftKV) Get(args *GetArgs, reply *GetReply) {
 		kv.mu.Unlock()
 
 		if op == operation {
+			reply.WrongLeader = false
 			fmt.Println(kv.me, " Client: ", operation.Cid, " Store: ", kv.Store, " value: ", kv.Store[op.Key])
 			fmt.Println(kv.me, " Client: ", operation.Cid, " KV finished, returning Store vale: ", kv.Store[op.Key], " from server: ", kv.me)
 			//var valueExists bool
@@ -277,7 +278,7 @@ func (kv *RaftKV) PutAppend(args *PutAppendArgs, reply *PutAppendReply) {
 		reply.WrongLeader = true
 		return
 	}
-	reply.WrongLeader = false
+	//reply.WrongLeader = false
 
 	fmt.Println(kv.me, " Client: ", operation.Cid, " KV sent PutAppend with key: ", operation.Key, " value: ", operation.Value)
 
@@ -294,6 +295,7 @@ func (kv *RaftKV) PutAppend(args *PutAppendArgs, reply *PutAppendReply) {
 		killed := kv.killed
 		kv.mu.Unlock()
 		if killed {
+			reply.WrongLeader = true
 			return
 		}
 		fmt.Println(kv.me, " Client: ", operation.Cid, " KV PutAppend operation was applied and I received it at index: ", index)
