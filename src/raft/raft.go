@@ -497,7 +497,6 @@ func (rf *Raft) sendAppendEntries(server int, args *AppendEntriesArgs, reply *Ap
 		if reply.Term > rf.CurrentTerm {
 			//rf.mu.Lock()
 			rf.VotesFor = -1
-			////fmt.Println("EIMAI LEADER KAI EGINA FOLLOWER ------------------------------------------------")
 			rf.State = 0
 			fmt.Println(":", rf.me, "I AM NOT THE LEADER ANYMORE", "MY TERM IS ", rf.CurrentTerm, "SOMEONE HAD TERM: ", reply.Term)
 			//rf.previousHeartBeatTime = time.Now() //todo ksanades to
